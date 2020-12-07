@@ -1,11 +1,11 @@
 import * as bodyParser from "body-parser";
-
 import * as cors from "cors";
 import * as express from "express";
 import * as helmet from "helmet";
 import * as morgan from "morgan";
 
 import api from "./api/index";
+
 // import * as errorHandler from "./helpers/errorHandler";
 
 const corsOptions = {
@@ -25,7 +25,7 @@ class App {
   private setMiddlewares(): void {
     this.express.use(cors(corsOptions));
     this.express.use(morgan("dev"));
-    this.express.use(bodyParser.json());
+    this.express.use(bodyParser.json({ limit: "50mb" }));
     this.express.use(bodyParser.urlencoded({ extended: false }));
     this.express.use(helmet());
   }

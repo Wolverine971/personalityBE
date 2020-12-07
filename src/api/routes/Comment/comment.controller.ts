@@ -40,11 +40,17 @@ export async function getComment(req: Request, res: Response) {
             id
             comment
             likes
-            authorId
+            author {
+              email
+              enneagramId
+            }
             comments {
               id
               comment
-              authorId
+              author {
+                email
+                enneagramId
+              }
               likes
               comments {
                 id
@@ -106,7 +112,10 @@ export async function addComment(req: Request, res: Response) {
           id
           comment
           likes
-          authorId
+          author {
+            email
+            enneagramId
+          }
           comments {
             id
           }

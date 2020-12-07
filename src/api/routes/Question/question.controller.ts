@@ -48,7 +48,10 @@ export async function addQuestion(req: Request, res: Response) {
           id
           question
           likes
-          authorId
+          author {
+            email
+            enneagramId
+          }
           subscribers
           comments {
             id
@@ -80,7 +83,10 @@ export async function getAllPaginated(req: Request, res: Response) {
       getPaginatedQuestions(pageSize: $pageSize, cursorId: $cursorId) {
         questions {
           id
-          authorId
+          author {
+            email
+            enneagramId
+          }
           question
           likes
           subscribers
@@ -94,7 +100,6 @@ export async function getAllPaginated(req: Request, res: Response) {
     } else {
       res.status(400).send(resp.errors);
     }
-
   } catch (error) {
     console.log(error);
     res.status(400).send(error.message);
@@ -138,16 +143,25 @@ export async function getQuestion(req: Request, res: Response) {
           question
           likes
           subscribers
-          authorId
+          author {
+            email
+            enneagramId
+          }
           comments {
             id
             comment
-            authorId
+            author {
+              email
+              enneagramId
+            }
             likes
             comments {
               id
               comment
-              authorId
+              author {
+                email
+                enneagramId
+              }
               likes
               comments {
                 id

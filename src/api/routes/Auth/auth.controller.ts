@@ -31,7 +31,7 @@ export async function getAll(req: Request, res: Response): Promise<any> {
 export async function getOne(req: Request, res: Response) {
   const variables = {
     // tslint:disable-next-line: no-string-literal
-    email: req["payload"].Email,
+    email: req["payload"].userId,
   };
 
   const query = `query GetUser($email: String!) {
@@ -83,7 +83,7 @@ export async function updateOne(req: Request, res: Response) {
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       email: req.body.email,
-      enneagramId: req.body.enneagramId,
+      enneagramId: req.body.enneagramId.toString(),
       mbtiId: req.body.mbtiId,
     };
 
@@ -220,38 +220,38 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
     }`;
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
-      res.send(resp.data.revokeRefreshTokensForUser);
+      const nodemailer = require("nodemailer");
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.FORGOT_PASSWORD_EMAIL,
+          pass: process.env.FORGOT_PASSWORD_EMAIL_PASSWORD,
+        },
+      });
+
+      // todo send actual reset link
+      const mailOptions = {
+        from: process.env.FORGOT_PASSWORD_EMAIL,
+        to: email,
+        subject: "Forgot Password",
+        html: "<h1>Forgot Password Link</h1><p>That was easy!</p>",
+      };
+      try {
+        const sent = await transporter.sendMail(mailOptions);
+        if (sent) {
+          console.log("Email sent: " + sent.response);
+          res.send("Email sent: " + sent.response);
+        }
+      } catch (error) {
+        console.log(error);
+        res.status(400).send("Failed to send Forgot Password Link");
+      }
     } else {
       res.status(400).send(resp.errors);
     }
   } catch (error) {
     res.status(400).send(error);
   }
-  // }
-
-  // const nodemailer = require("nodemailer");
-  // const transporter = nodemailer.createTransport({
-  //   service: "gmail",
-  //   auth: {
-  //     user: process.env.FORGOT_PASSWORD_EMAIL,
-  //     pass: process.env.FORGOT_PASSWORD_EMAIL_PASSWORD,
-  //   },
-  // });
-
-  // const mailOptions = {
-  //   from: "youremail@gmail.com",
-  //   to: req.body.Email,
-  //   subject: "Forgot Password",
-  //   html: "<h1>Forgot Password Link</h1><p>That was easy!</p>",
-  // };
-  // try {
-  //   const resp = await transporter.sendMail(mailOptions);
-  //   if (resp) {
-  //     console.log("Email sent: " + resp.response);
-  //     res.send("Email sent: " + resp.response);
-  //   }
-  // } catch (error) {
-  //   res.status(400).send("Failed to send Forgot Password Link");
   // }
 };
 

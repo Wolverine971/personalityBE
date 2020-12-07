@@ -27,11 +27,17 @@ export async function getDashboard(req: Request, res: Response) {
             question
             likes
             subscribers
-            authorId
+            author {
+              email
+              enneagramId
+            }
             comments {
                 id
                 comment
-                authorId
+                author {
+                  email
+                  enneagramId
+                }
                 likes
                 comments {
                     id
