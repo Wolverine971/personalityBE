@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { pingGraphql } from "../../../helpers/pingGraphql";
 
+import { pingGraphql } from "../../../helpers/pingGraphql";
 // tslint:disable-next-line: no-var-requires
 import { client } from "../../elasticsearch";
 
@@ -41,14 +41,14 @@ export async function getComment(req: Request, res: Response) {
             comment
             likes
             author {
-              email
+              id
               enneagramId
             }
             comments {
               id
               comment
               author {
-                email
+                id
                 enneagramId
               }
               likes
@@ -71,6 +71,7 @@ export async function getComment(req: Request, res: Response) {
 }
 
 export async function addComment(req: Request, res: Response) {
+  const date = new Date();
   return client
     .index({
       index: "comment",
@@ -81,11 +82,11 @@ export async function addComment(req: Request, res: Response) {
         // tslint:disable-next-line: no-string-literal
         authorId: req["payload"].userId,
         comment: req.body.comment,
+        createdDate: date,
       },
     })
     .then(async (resp) => {
       if (req.params.index === "question") {
-        const date = new Date();
         await client.update({
           index: "question",
           id: req.params.id,
@@ -158,38 +159,3 @@ export async function addCommentLike(req: Request, res: Response) {
     res.status(400).send(error.message);
   }
 }
-
-// export async function getMoreComments(req: Request, res: Response) {
-//   try {
-//     const variables = {
-//       commentId: req.params.commentId,
-//     };
-
-//     const query = `query GetQuestion($questionId: String!) {
-//         getQuestion(questionId: $questionId) {
-//           id
-//           question
-//           likes
-//           subscribers
-//           authorId
-//           comments {
-//             comment
-//             authorId
-//             likes
-//             comments {
-//               id
-//             }
-//           }
-//         }
-//       }`;
-//     const resp = await pingGraphql(query, variables);
-//     if (!resp.errors) {
-//       res.json(resp.data.getQuestion);
-//     } else {
-//       res.status(400).send(resp.errors);
-//     }
-//   } catch (error) {
-//     console.log(error);
-//     res.status(400).send(error.message);
-//   }
-// }

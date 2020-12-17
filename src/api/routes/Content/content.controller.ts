@@ -6,7 +6,6 @@ import { client } from "../../elasticsearch";
 const formidable = require("formidable");
 const fs = require("fs");
 
-// import imagemin from "imagemin";
 const imagemin = require("imagemin");
 const mozjpeg = require("imagemin-mozjpeg");
 const isJpg = require("is-jpg");
@@ -14,7 +13,6 @@ const isJpg = require("is-jpg");
 const sharp = require("sharp");
 import { v4 as uuidv4 } from "uuid";
 import { s3 } from "../../..";
-// import * as aws from "aws-sdk";
 
 export async function addContent(req: Request, res: Response) {
   try {
@@ -24,36 +22,56 @@ export async function addContent(req: Request, res: Response) {
     } else {
       console.log("no file");
     }
+    let id = null;
     const form = new formidable.IncomingForm();
     form.parse(req, async (err, fields, files) => {
       if (err) {
         return res.status(400).json({ error: err.message });
       }
-      const esResp = await client.index({
-        index: req.params.type,
-        type: "_doc",
-        body: {
-          // tslint:disable-next-line: no-string-literal
-          authorId: req["payload"].userId,
-          text: fields.text,
-        },
-      });
+      if (fields.text) {
+        const esResp = await client.index({
+          index: req.params.type,
+          type: "_doc",
+          body: {
+            // tslint:disable-next-line: no-string-literal
+            authorId: req["payload"].userId,
+            text: fields.text,
+          },
+        });
+        id = esResp._id;
+      }
 
       let imgKey = "";
       if (files.img) {
         imgKey = await getImage(files.img);
       }
       const variables = {
-        id: esResp._id,
+        id: id ? id : null,
         // tslint:disable-next-line: no-string-literal
         userId: req["payload"].userId,
+        enneagramType: req.params.type,
         text: fields.text,
         img: imgKey,
       };
 
-      const query = `mutation CreateContent($id: String!, $userId: String!, $text: String, $img: String) {
-        createContent(id: $id, userId: $userId, text: $text, img: $img) {
-            id
+      const query = `mutation CreateContent($id: String, $userId: String!, $text: String, $img: String, $enneagramType: String!) {
+        createContent(id: $id, userId: $userId, text: $text, img: $img, enneagramType: $enneagramType) {
+            userId
+            text
+            img
+            likes
+            comments{
+              id
+              comment
+              likes
+              author {
+                id
+                enneagramId
+              }
+              comments {
+                id
+              }
+            }
         }
       }`;
       const resp = await pingGraphql(query, variables);
@@ -72,15 +90,29 @@ export async function addContent(req: Request, res: Response) {
 export async function getContent(req: Request, res: Response) {
   try {
     const variables = {
+      enneagramType: req.params.type,
       text: req.body.text,
       img: req.body.img,
     };
 
-    const query = `query Content {
-        content {
+    const query = `query Content($enneagramType: String!) {
+        content(enneagramType: $enneagramType) {
             userId
             text
             img
+            likes
+            comments {
+              id
+              comment
+              likes
+              author {
+                id
+                enneagramId
+              }
+              comments {
+                id
+              }
+            }
         }
       }`;
     const resp = await pingGraphql(query, variables);
@@ -153,3 +185,28 @@ export const getImage = async (img: any) => {
 
   return uploadBuffer(newBuffer);
 };
+
+export async function addContentLike(req: Request, res: Response) {
+  try {
+    const variables = {
+      // tslint:disable-next-line: no-string-literal
+      userId: req["payload"].userId,
+      id: req.params.contentId,
+      type: "content",
+      operation: req.params.operation,
+    };
+
+    const query = `mutation AddLike($userId: String!, $id: String!, $type: String!, $operation: String!) {
+          addLike(userId: $userId, id: $id, type: $type, operation: $operation)
+        }`;
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp);
+    } else {
+      res.status(400).send(resp.errors);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+}

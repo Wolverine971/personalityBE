@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { client } from "../../elasticsearch";
 import { typeaheadQuery } from "../../ESRequests";
@@ -49,7 +50,7 @@ export async function addQuestion(req: Request, res: Response) {
           question
           likes
           author {
-            email
+            id
             enneagramId
           }
           subscribers
@@ -71,7 +72,7 @@ export async function addQuestion(req: Request, res: Response) {
     });
 }
 
-export async function getAllPaginated(req: Request, res: Response) {
+export async function getQuestions(req: Request, res: Response) {
   try {
     const variables = {
       // tslint:disable-next-line: radix
@@ -79,12 +80,12 @@ export async function getAllPaginated(req: Request, res: Response) {
       cursorId: req.params.cursorId || "",
     };
 
-    const query = `query GetPaginatedQuestions($pageSize: Int, $cursorId: String!) {
-      getPaginatedQuestions(pageSize: $pageSize, cursorId: $cursorId) {
+    const query = `query GetQuestions($pageSize: Int, $cursorId: String!) {
+      getQuestions(pageSize: $pageSize, cursorId: $cursorId) {
         questions {
           id
           author {
-            email
+            id
             enneagramId
           }
           question
@@ -96,7 +97,7 @@ export async function getAllPaginated(req: Request, res: Response) {
     }`;
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
-      res.json(resp.data.getPaginatedQuestions);
+      res.json(resp.data.getQuestions);
     } else {
       res.status(400).send(resp.errors);
     }
@@ -143,29 +144,21 @@ export async function getQuestion(req: Request, res: Response) {
           question
           likes
           subscribers
+          commentorIds
           author {
-            email
+            id
             enneagramId
           }
           comments {
             id
             comment
             author {
-              email
+              id
               enneagramId
             }
             likes
             comments {
               id
-              comment
-              author {
-                email
-                enneagramId
-              }
-              likes
-              comments {
-                id
-              }
             }
           }
         }
@@ -198,6 +191,53 @@ export async function addSubscription(req: Request, res: Response) {
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
       res.json(resp.data.addSubscription);
+    } else {
+      res.status(400).send(resp.errors);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+}
+
+export async function getComments(req: Request, res: Response) {
+  try {
+    console.log(req.params.questionId);
+    const variables = {
+      questionId: req.params.questionId,
+      enneagramTypes: req.body.enneagramTypes,
+      dateRange: req.body.dateRange,
+      sortBy: req.body.sortBy,
+    };
+
+    const query = `query getComments($questionId: String!, $enneagramTypes: [String], $dateRange: String, $sortBy: String) {
+        getComments(questionId: $questionId, enneagramTypes: $enneagramTypes, dateRange: $dateRange, sortBy: $sortBy) {
+          id
+          comment
+          likes
+          dateCreated
+          author {
+            id
+            enneagramId
+          }
+          comments {
+            id
+            comment
+            author {
+              id
+              enneagramId
+            }
+            likes
+            comments {
+              id
+            }
+          }
+        }
+      }`;
+
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp.data.getComments);
     } else {
       res.status(400).send(resp.errors);
     }

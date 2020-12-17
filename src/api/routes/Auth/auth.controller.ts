@@ -28,14 +28,15 @@ export async function getAll(req: Request, res: Response): Promise<any> {
   }
 }
 
-export async function getOne(req: Request, res: Response) {
+export async function getUser(req: Request, res: Response) {
   const variables = {
     // tslint:disable-next-line: no-string-literal
     email: req["payload"].userId,
   };
 
-  const query = `query GetUser($email: String!) {
-    getUser(email: $email){
+  const query = `query GetUserById($id: String!) {
+    getUserById(id: $id){
+      id
       firstName
       lastName
       email
@@ -45,7 +46,7 @@ export async function getOne(req: Request, res: Response) {
   }`;
   const resp = await pingGraphql(query, variables);
   if (!resp.errors) {
-    res.json(resp.data.createUser);
+    res.json(resp.data.getUserById);
   } else {
     res.status(400).send(resp.errors);
   }
@@ -80,6 +81,7 @@ export async function updateOne(req: Request, res: Response) {
   try {
     const variables = {
       // tslint:disable-next-line: no-string-literal
+      id: req["payload"].userId,
       firstName: req.body.firstName,
       lastName: req.body.lastName,
       email: req.body.email,
@@ -87,10 +89,13 @@ export async function updateOne(req: Request, res: Response) {
       mbtiId: req.body.mbtiId,
     };
 
-    const query = `mutation UpdateUser($firstName: String, $lastName: String, $email: String, $enneagramId: String, $mbtiId: String) {
-      updateUser(firstName: $firstName, lastName: $lastName, email: $email, enneagramId: $enneagramId, mbtiId: $mbtiId) {
+    const query = `mutation UpdateUser($id: String!, $firstName: String, $lastName: String, $email: String, $enneagramId: String, $mbtiId: String) {
+      updateUser(id: $id, firstName: $firstName, lastName: $lastName, email: $email, enneagramId: $enneagramId, mbtiId: $mbtiId) {
         firstName
+        lastName
         email
+        enneagramId
+        mbtiId
       }
     }`;
     const resp = await pingGraphql(query, variables);
@@ -133,8 +138,9 @@ export async function login(req: Request, res: Response) {
       email,
     };
 
-    const query = `query GetUser($email: String!) {
-      getUser(email: $email){
+    const query = `query GetUserByEmail($email: String!) {
+      getUserByEmail(email: $email){
+        id
         firstName
         lastName
         password
@@ -147,7 +153,7 @@ export async function login(req: Request, res: Response) {
     let user = null;
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
-      user = resp.data.getUser;
+      user = resp.data.getUserByEmail;
     } else {
       res.status(400).send(resp.errors);
     }
@@ -159,10 +165,12 @@ export async function login(req: Request, res: Response) {
         const refreshToken = createRefreshToken(user);
         // sendRefreshToken(res, refreshToken);
         const accessToken = createAccessToken(user);
+        delete user.password;
+        delete user.tokenVersion;
         return res.json({
           accessToken,
           user,
-          refreshToken: createRefreshToken(user),
+          refreshToken,
         });
       } else {
         res.status(401).send("invalid user");
@@ -267,11 +275,12 @@ export const doRefreshToken = async (req: Request, res: Response, next) => {
     payload = verify(strippedToken, process.env.REFRESH_TOKEN!);
 
     const variables = {
-      email: payload.userId,
+      id: payload.userId,
     };
 
-    const query = `query GetUser($email: String!) {
-        getUser(email: $email){
+    const query = `query GetUserById($id: String!) {
+        getUserById(id: $id){
+          id
           firstName
           lastName
           email
@@ -283,7 +292,7 @@ export const doRefreshToken = async (req: Request, res: Response, next) => {
     let user = null;
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
-      user = resp.data.getUser;
+      user = resp.data.getUserById;
     } else {
       res.status(400).send(resp.errors);
     }
