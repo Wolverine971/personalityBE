@@ -23,5 +23,7 @@ router.post("/forgotPassword", controller.forgotPassword);
 router.get("/refresh_token/:token", controller.doRefreshToken);
 
 router.post("/revoke_refresh", controller.revokeRefreshTokens);
+router.get("/leave", controller.isAuth, controller.leave);
+router.get("/enter", controller.isAuth, controller.enter);
 
 export default router;

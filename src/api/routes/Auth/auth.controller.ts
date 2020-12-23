@@ -310,6 +310,7 @@ export const doRefreshToken = async (req: Request, res: Response, next) => {
         refreshToken: createRefreshToken(user),
         user,
       });
+      // this.getNotifications()
     }
   } catch (err) {
     console.log(err);
@@ -332,7 +333,7 @@ export const revokeRefreshTokens = async (req: Request, res: Response) => {
       res.status(400).send(resp.errors);
     }
   } catch (error) {
-    res.status(403);
+    res.status(403).send(error);
   }
 };
 
@@ -353,4 +354,21 @@ export const isAuth = (req: Request, res: Response, next) => {
       res.status(403).send(error);
     }
   }
+};
+
+export const leave = async (req: Request, res: Response) => {
+  // try {
+  console.log("leave");
+  res.status(200).send("leave");
+  // } catch (error) {
+  //   res.status(403);
+  // }
+};
+export const enter = async (req: Request, res: Response) => {
+  // try {
+  console.log("enter");
+  res.status(200).send("enter");
+  // } catch (error) {
+  //   res.status(403);
+  // }
 };

@@ -21,6 +21,32 @@ export async function getDashboard(req: Request, res: Response) {
       },
     });
 
+    const askedQuestions = await client.search({
+      index: "question",
+      body: {
+        query: {
+          bool: {
+            must: [
+              {
+                match: {
+                  authorId: req["payload"].userId,
+                },
+              },
+            ],
+          },
+        },
+
+        size: 10,
+        sort: [
+          {
+            createdDate: {
+              order: "desc",
+            },
+          },
+        ],
+      },
+    });
+
     const query = `query GetDashboard($userId: String!) {
         getDashboard(userId: $userId) {
             id
@@ -53,7 +79,11 @@ export async function getDashboard(req: Request, res: Response) {
     const gqlResp = await pingGraphql(query, variables);
     if (!gqlResp.errors) {
       console.log(gqlResp.data);
-      res.json({ subscriptions: gqlResp.data.getDashboard, newQuestions });
+      res.json({
+        subscriptions: gqlResp.data.getDashboard,
+        newQuestions,
+        askedQuestions,
+      });
     } else {
       res.status(400).send(gqlResp.errors);
     }
