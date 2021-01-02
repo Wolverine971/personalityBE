@@ -20,6 +20,7 @@ const corsOptions = {
     "http://192.168.1.251",
     "http://192.168.1.251:3000",
     "http://www.9takes.com",
+    "http://9takes.com"
   ],
   credentials: true,
 };
