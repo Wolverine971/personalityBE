@@ -6,21 +6,9 @@ import * as morgan from "morgan";
 
 import api from "./api/index";
 
-// import * as errorHandler from "./helpers/errorHandler";
-
 const corsOptions = {
   origin: [
-    "http://localhost",
-    "http://localhost:3000",
-    "http://69.164.208.9:3000",
-    "http://0.0.0.0",
-    "http://0.0.0.0:3000",
-    "http://127.0.0.1",
-    "http://127.0.0.1:3000",
-    "http://192.168.1.251",
-    "http://192.168.1.251:3000",
-    "http://www.9takes.com",
-    "http://9takes.com"
+    process.env.ORIGIN
   ],
   credentials: true,
 };
