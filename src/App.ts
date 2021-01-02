@@ -9,7 +9,17 @@ import api from "./api/index";
 // import * as errorHandler from "./helpers/errorHandler";
 
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://0.0.0.0",
+    "http://0.0.0.0:3000",
+    "http://127.0.0.1",
+    "http://127.0.0.1:3000",
+    "http://192.168.1.251",
+    "http://192.168.1.251:3000",
+    "http://www.9takes.com",
+  ],
   credentials: true,
 };
 class App {

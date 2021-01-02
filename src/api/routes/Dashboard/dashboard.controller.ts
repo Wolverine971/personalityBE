@@ -29,6 +29,7 @@ export async function getDashboard(req: Request, res: Response) {
             must: [
               {
                 match: {
+                  // tslint:disable-next-line: no-string-literal
                   authorId: req["payload"].userId,
                 },
               },

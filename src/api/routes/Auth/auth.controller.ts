@@ -6,6 +6,7 @@ import { createAccessToken, createRefreshToken } from "../../../config/auth";
 import { pingGraphql } from "../../../helpers/pingGraphql";
 const saltRounds = 10;
 
+import { notificationsSetup } from '../Notifications/notifications'
 export async function getAll(req: Request, res: Response): Promise<any> {
   try {
     const query = `query Users() {
@@ -173,10 +174,10 @@ export async function login(req: Request, res: Response) {
           refreshToken,
         });
       } else {
-        res.status(401).send("invalid user");
+        res.status(401).send("Login Failed");
       }
     } else {
-      res.status(401).send("wrong email");
+      res.status(401).send("Login Failed");
     }
   } catch (error) {
     res.status(400).send(error);
@@ -193,17 +194,18 @@ export async function logout(req: Request, res: Response) {
 }
 
 export async function register(req: Request, res: Response) {
-  const { email, password } = req.body;
+  const { email, password, enneagramType } = req.body;
 
   try {
     const hash = await bcrypt.hash(password, saltRounds);
     const variables = {
       email,
       password: hash,
+      enneagramType
     };
 
-    const query = `mutation CreateUser($email: String!, $password: String!) {
-      createUser(email: $email, password: $password)
+    const query = `mutation CreateUser($email: String!, $password: String!, $enneagramType: String!) {
+      createUser(email: $email, password: $password, enneagramType: $enneagramType)
         }`;
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
@@ -302,7 +304,7 @@ export const doRefreshToken = async (req: Request, res: Response, next) => {
     } else if (user.tokenVersion !== payload.tokenVersion) {
       return res.send({ ok: false, accessToken: "" });
     } else {
-      // sendRefreshToken(res, createRefreshToken(user));
+      notificationsSetup(payload.userId)
 
       res.send({
         ok: true,
@@ -358,7 +360,7 @@ export const isAuth = (req: Request, res: Response, next) => {
 
 export const leave = async (req: Request, res: Response) => {
   // try {
-  console.log("leave");
+  // console.log("leave");
   res.status(200).send("leave");
   // } catch (error) {
   //   res.status(403);
@@ -366,7 +368,7 @@ export const leave = async (req: Request, res: Response) => {
 };
 export const enter = async (req: Request, res: Response) => {
   // try {
-  console.log("enter");
+  // console.log("enter");
   res.status(200).send("enter");
   // } catch (error) {
   //   res.status(403);
