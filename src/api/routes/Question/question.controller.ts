@@ -175,6 +175,33 @@ export async function getQuestion(req: Request, res: Response) {
   }
 }
 
+export async function getJustQuestion(req: Request, res: Response) {
+  try {
+    const variables = {
+      questionId: req.params.question,
+    };
+
+    const query = `query GetQuestion($questionId: String!) {
+        getQuestion(questionId: $questionId) {
+          id
+          question
+          likes
+          subscribers
+          commentorIds
+        }
+      }`;
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp.data.getQuestion);
+    } else {
+      res.status(400).send(resp.errors);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+}
+
 export async function addSubscription(req: Request, res: Response) {
   try {
     console.log(req.params.questionId);

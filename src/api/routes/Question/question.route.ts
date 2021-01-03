@@ -5,15 +5,15 @@ import * as questionsController from "./question.controller";
 
 const router: Router = Router();
 
-router.get("/typeAhead/:comment", isAuth, questionsController.getTypeAhead);
+router.get("/typeAhead/:comment", questionsController.getTypeAhead);
 router.get("/add/:question", isAuth, questionsController.addQuestion);
 router.get(
   "/all/:pageSize/:cursorId?",
-  isAuth,
   questionsController.getQuestions
 );
 
 router.get("/:question", isAuth, questionsController.getQuestion);
+router.get("/single/:question", questionsController.getJustQuestion);
 router.get(
   "/like/:questionId/:operation",
   isAuth,
