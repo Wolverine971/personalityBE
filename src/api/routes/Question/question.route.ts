@@ -27,4 +27,5 @@ router.get(
 
 router.post("/sort/:questionId", isAuth, questionsController.getComments);
 
+router.put("/notifications", isAuth, questionsController.clearNotifications);
 export default router;

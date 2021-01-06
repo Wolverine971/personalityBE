@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 
+import { redis } from "../../..";
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { client } from "../../elasticsearch";
 import { typeaheadQuery } from "../../ESRequests";
@@ -268,6 +269,21 @@ export async function getComments(req: Request, res: Response) {
     } else {
       res.status(400).send(resp.errors);
     }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+}
+
+
+export async function clearNotifications(req: Request, res: Response) {
+  try {
+    console.log('try to clear')
+
+    const redisClient = redis.createClient();
+    // tslint:disable-next-line: no-string-literal
+    redisClient.set(`push:notifications:${req["payload"].userId}`, '');
+    res.status(200).send('ok')
   } catch (error) {
     console.log(error);
     res.status(400).send(error.message);
