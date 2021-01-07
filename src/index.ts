@@ -14,8 +14,8 @@ const PORT = 3001;
 let server
 if(process.env.ORIGIN ==='https://9takes.com'){
   server = https.createServer({
-    key: fs.readFileSync('/etc/letsencrypt/live/my_api_url/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/my_api_url/fullchain.pem'),
+    key: fs.readFileSync('/etc/letsencrypt/live/9takes.com/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/9takes.com/fullchain.pem'),
   }, app).listen(PORT, () => {
     console.log(`Server is listening on ${PORT}`);
   });
