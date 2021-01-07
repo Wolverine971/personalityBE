@@ -1,7 +1,7 @@
 // import socket from "socket.io";
 
 import * as aws from "aws-sdk";
-
+const https = require('https');
 import app from "./App";
 import CONFIG from "./config/config";
 
@@ -9,7 +9,7 @@ import CONFIG from "./config/config";
 
 const PORT = 3001;
 
-const server = app.listen(PORT, () => {
+const server = https.createServer(app).listen(PORT, () => {
   console.log(`Server is listening on ${PORT}`);
 });
 
