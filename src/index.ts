@@ -1,17 +1,29 @@
 // import socket from "socket.io";
 
 import * as aws from "aws-sdk";
-const https = require('https');
+
 import app from "./App";
 import CONFIG from "./config/config";
+
+const https = require('https');
+const fs = require('fs');
 
 // import "../config/db";
 
 const PORT = 3001;
-
-const server = https.createServer(app).listen(PORT, () => {
-  console.log(`Server is listening on ${PORT}`);
-});
+let server
+if(process.env.ORIGIN ==='https://9takes.com'){
+  server = https.createServer({
+    key: fs.readFileSync('/etc/letsencrypt/live/my_api_url/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/my_api_url/fullchain.pem'),
+  }, app).listen(PORT, () => {
+    console.log(`Server is listening on ${PORT}`);
+  });
+} else {
+  server = app.listen(PORT, () => {
+    console.log(`Server is listening on ${PORT}`);
+  });
+}
 
 // tslint:disable-next-line: no-var-requires
 export const io = require("socket.io")(server, { origins: "*:*" });
