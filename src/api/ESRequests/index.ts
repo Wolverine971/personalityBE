@@ -1,5 +1,4 @@
 export const mustContain = (index: string, text: string) => {
-  console.log(index + text);
   if (text) {
     return {
       index,
@@ -25,7 +24,6 @@ export const mustContain = (index: string, text: string) => {
 // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/full-text-queries.html
 
 export const typeaheadQuery = (index: string, text: string) => {
-  console.log(index + text);
   return {
     index,
     body: {

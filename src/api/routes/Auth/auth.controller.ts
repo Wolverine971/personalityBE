@@ -158,7 +158,6 @@ export async function login(req: Request, res: Response) {
     } else {
       res.status(400).send(resp.errors);
     }
-    console.log(user);
 
     if (user) {
       const match = await bcrypt.compare(password, user.password);
@@ -249,7 +248,6 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
       try {
         const sent = await transporter.sendMail(mailOptions);
         if (sent) {
-          console.log("Email sent: " + sent.response);
           res.send("Email sent: " + sent.response);
         }
       } catch (error) {
@@ -341,7 +339,6 @@ export const revokeRefreshTokens = async (req: Request, res: Response) => {
 
 export const isAuth = (req: Request, res: Response, next) => {
   const authorization = req.headers.authorization;
-  console.log("auth: " + authorization);
   if (!authorization) {
     res.sendStatus(403);
   } else {

@@ -79,7 +79,6 @@ export async function getDashboard(req: Request, res: Response) {
 
     const gqlResp = await pingGraphql(query, variables);
     if (!gqlResp.errors) {
-      console.log(gqlResp.data);
       res.json({
         subscriptions: gqlResp.data.getDashboard,
         newQuestions,

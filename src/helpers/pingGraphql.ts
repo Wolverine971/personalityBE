@@ -14,7 +14,6 @@ export const pingGraphql = async (query: any, variables?: any) => {
     };
 
     return rp(options).then((r) => {
-      console.log("gql complete");
       return r;
     });
   } catch (error) {

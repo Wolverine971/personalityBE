@@ -6,7 +6,6 @@ import { client } from "../../elasticsearch";
 import { typeaheadQuery } from "../../ESRequests";
 
 export async function getTypeAhead(req: Request, res: Response) {
-  console.log(req.query.index);
   const comment = req.params.comment;
   return client
     .search(typeaheadQuery("question", comment))
@@ -20,9 +19,7 @@ export async function getTypeAhead(req: Request, res: Response) {
 }
 
 export async function addQuestion(req: Request, res: Response) {
-  console.log(req.params.question);
   const date = new Date();
-  console.log(date);
   return client
     .index({
       index: "question",
@@ -36,8 +33,6 @@ export async function addQuestion(req: Request, res: Response) {
       },
     })
     .then(async (resp) => {
-      console.log("Successful query!");
-
       const variables = {
         id: resp._id,
         question: req.params.question,
@@ -205,7 +200,6 @@ export async function getJustQuestion(req: Request, res: Response) {
 
 export async function addSubscription(req: Request, res: Response) {
   try {
-    console.log(req.params.questionId);
     const variables = {
       questionId: req.params.questionId,
       // tslint:disable-next-line: no-string-literal
@@ -230,7 +224,6 @@ export async function addSubscription(req: Request, res: Response) {
 
 export async function getComments(req: Request, res: Response) {
   try {
-    console.log(req.params.questionId);
     const variables = {
       questionId: req.params.questionId,
       enneagramTypes: req.body.enneagramTypes,
@@ -278,8 +271,6 @@ export async function getComments(req: Request, res: Response) {
 
 export async function clearNotifications(req: Request, res: Response) {
   try {
-    console.log('try to clear')
-
     const redisClient = redis.createClient();
     // tslint:disable-next-line: no-string-literal
     redisClient.set(`push:notifications:${req["payload"].userId}`, '');
