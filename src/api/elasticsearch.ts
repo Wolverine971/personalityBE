@@ -18,5 +18,6 @@ export const client = new elasticsearch.Client({
     // 'https://[username]:[password]@[server]:[port]/',
     'http://localhost:9200/'
   ],
-  log: 'trace'
+  // [process.env.ORIGIN] == 'http://localhost:3000' ? (log: 'trace') : ''
+  log: process.env.ORIGIN === 'http://localhost:3000' ? 'trace' : ''
 })

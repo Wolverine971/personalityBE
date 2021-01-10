@@ -97,6 +97,7 @@ export async function getContent(req: Request, res: Response) {
 
     const query = `query Content($enneagramType: String!) {
         content(enneagramType: $enneagramType) {
+            id
             userId
             text
             img

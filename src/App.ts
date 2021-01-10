@@ -3,12 +3,16 @@ import * as cors from "cors";
 import * as express from "express";
 import * as helmet from "helmet";
 import * as morgan from "morgan";
+import * as errorHandler from "./helpers/errorHandler"
 
 import api from "./api/index";
 
 const corsOptions = {
   origin: [
-    process.env.ORIGIN
+    process.env.ORIGIN,
+    // 'http://localhost:3000',
+    // 'http://localhost:3000/',
+    // 'http://localhost:7357'
   ],
   credentials: true,
 };
@@ -38,8 +42,8 @@ class App {
   }
 
   private catchErrors(): void {
-    // this.express.use(errorHandler.notFound);
-    // this.express.use(errorHandler.internalServerError);
+    this.express.use(errorHandler.notFound);
+    this.express.use(errorHandler.internalServerError);
   }
 }
 
