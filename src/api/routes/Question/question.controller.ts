@@ -50,6 +50,7 @@ export async function addQuestion(req: Request, res: Response) {
             enneagramId
           }
           subscribers
+          dateCreated
           comments {
             id
           }
@@ -73,11 +74,11 @@ export async function getQuestions(req: Request, res: Response) {
     const variables = {
       // tslint:disable-next-line: radix
       pageSize: parseInt(req.params.pageSize),
-      cursorId: req.params.cursorId || "",
+      lastDate: req.params.lastDate || "",
     };
 
-    const query = `query GetQuestions($pageSize: Int, $cursorId: String!) {
-      getQuestions(pageSize: $pageSize, cursorId: $cursorId) {
+    const query = `query GetQuestions($pageSize: Int, $lastDate: String!) {
+      getQuestions(pageSize: $pageSize, lastDate: $lastDate) {
         questions {
           id
           author {
@@ -87,6 +88,7 @@ export async function getQuestions(req: Request, res: Response) {
           question
           likes
           subscribers
+          dateCreated
         }
         count
       }
@@ -145,6 +147,7 @@ export async function getQuestion(req: Request, res: Response) {
             id
             enneagramId
           }
+          dateCreated
           comments {
             id
             comment
@@ -184,6 +187,7 @@ export async function getJustQuestion(req: Request, res: Response) {
           likes
           subscribers
           commentorIds
+          dateCreated
         }
       }`;
     const resp = await pingGraphql(query, variables);

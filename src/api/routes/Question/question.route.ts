@@ -8,7 +8,7 @@ const router: Router = Router();
 router.get("/typeAhead/:comment", questionsController.getTypeAhead);
 router.get("/add/:question", isAuth, questionsController.addQuestion);
 router.get(
-  "/all/:pageSize/:cursorId?",
+  "/all/:pageSize/:lastDate?",
   questionsController.getQuestions
 );
 
