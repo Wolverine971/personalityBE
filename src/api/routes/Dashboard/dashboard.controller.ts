@@ -54,21 +54,17 @@ export async function getDashboard(req: Request, res: Response) {
             question
             likes
             subscribers
+            commentorIds
+            dateCreated
             author {
               email
               enneagramId
             }
             comments {
+              comments {
                 id
-                comment
-                author {
-                  email
-                  enneagramId
-                }
-                likes
-                comments {
-                    id
-                }
+              }
+              count
             }
         }
     }`;

@@ -40,21 +40,29 @@ export async function getComment(req: Request, res: Response) {
             id
             comment
             likes
+            dateCreated
             author {
               id
               enneagramId
             }
             comments {
-              id
-              comment
-              author {
-                id
-                enneagramId
-              }
-              likes
               comments {
                 id
+                comment
+                likes
+                dateCreated
+                author {
+                  id
+                  enneagramId
+                }
+                comments {
+                  comments {
+                    id
+                  }
+                  count
+                }
               }
+              count
             }
           }
         }`;
@@ -113,12 +121,16 @@ export async function addComment(req: Request, res: Response) {
           id
           comment
           likes
+          dateCreated
           author {
             email
             enneagramId
           }
           comments {
-            id
+            comments {
+              id
+            }
+            count
           }
         }
       }`;

@@ -54,23 +54,32 @@ export async function addContent(req: Request, res: Response) {
         img: imgKey,
       };
 
-      const query = `mutation CreateContent($id: String, $userId: String!, $text: String, $img: String, $enneagramType: String!) {
-        createContent(id: $id, userId: $userId, text: $text, img: $img, enneagramType: $enneagramType) {
+      const query = `mutation CreateContent($id: String, $userId: String!, $enneagramType: String!, $text: String, $img: String) {
+        createContent(id: $id, userId: $userId, enneagramType: $enneagramType, text: $text, img: $img) {
+            id
             userId
             text
             img
             likes
+            dateCreated
             comments{
-              id
-              comment
-              likes
-              author {
+              comment{
                 id
-                enneagramId
+                comment
+                likes
+                dateCreated
+                author {
+                  id
+                  enneagramId
+                }
+                comments {
+                  comments {
+                    id
+                  }
+                  count
+                }
               }
-              comments {
-                id
-              }
+              count
             }
         }
       }`;
@@ -91,34 +100,87 @@ export async function getContent(req: Request, res: Response) {
   try {
     const variables = {
       enneagramType: req.params.type,
-      text: req.body.text,
-      img: req.body.img,
+      type: req.body.type ? req.body.type : "",
+      pageSize: req.body.pageSize ? req.body.pageSize : 10,
+      lastDate: req.params.lastDate ? req.params.lastDate : "",
     };
 
-    const query = `query Content($enneagramType: String!) {
-        content(enneagramType: $enneagramType) {
+    const query = `query GetContent($enneagramType: String!, $type: String, $pageSize: Int, $lastDate: String!) {
+        getContent(enneagramType: $enneagramType, type: $type, pageSize: $pageSize, lastDate: $lastDate) {
+          content {
             id
             userId
             text
             img
             likes
+            dateCreated
             comments {
-              id
-              comment
-              likes
-              author {
-                id
-                enneagramId
-              }
               comments {
                 id
+                comment
+                likes
+                dateCreated
+                author {
+                  id
+                  enneagramId
+                }
+                comments {
+                  comments {
+                    id
+                  }
+                  count
+                }
               }
+              count
             }
+          }
+          count
         }
       }`;
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
-      res.json(resp.data.content);
+      res.json(resp.data.getContent);
+    } else {
+      res.status(400).send(resp.errors);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+}
+
+export async function loadMore(req: Request, res: Response) {
+  try {
+    const variables = {
+      lastDate: req.params.lastDate ? req.params.lastDate : "",
+      parentId: req.params.parentId ? req.params.parentId : ""
+    };
+
+    const query = `query GetMoreComments($parentId: String!, $lastDate: String!) {
+      getMoreComments(parentId: $parentId, lastDate: $lastDate) {
+        comments {
+          id
+          comment
+          likes
+          dateCreated
+          parentId
+          author {
+            id
+            enneagramId
+          }
+          comments {
+            comments {
+              id
+            }
+            count
+          }
+        }
+        count
+      }
+    }`;
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp.data.getMoreComments);
     } else {
       res.status(400).send(resp.errors);
     }

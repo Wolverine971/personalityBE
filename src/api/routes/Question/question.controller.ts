@@ -45,14 +45,18 @@ export async function addQuestion(req: Request, res: Response) {
           id
           question
           likes
+          subscribers
+          commentorIds
+          dateCreated
           author {
             id
             enneagramId
           }
-          subscribers
-          dateCreated
           comments {
-            id
+            comments {
+              id
+            }
+            count
           }
         }
       }`;
@@ -81,14 +85,15 @@ export async function getQuestions(req: Request, res: Response) {
       getQuestions(pageSize: $pageSize, lastDate: $lastDate) {
         questions {
           id
+          question
+          likes
+          subscribers
+          commentorIds
+          dateCreated
           author {
             id
             enneagramId
           }
-          question
-          likes
-          subscribers
-          dateCreated
         }
         count
       }
@@ -143,22 +148,29 @@ export async function getQuestion(req: Request, res: Response) {
           likes
           subscribers
           commentorIds
+          dateCreated
           author {
             id
             enneagramId
           }
-          dateCreated
           comments {
-            id
-            comment
-            author {
-              id
-              enneagramId
-            }
-            likes
             comments {
               id
+              comment
+              likes
+              dateCreated
+              author {
+                id
+                enneagramId
+              }
+              comments {
+                comments {
+                  id
+                }
+                count
+              }
             }
+            count
           }
         }
       }`;
@@ -182,6 +194,7 @@ export async function getJustQuestion(req: Request, res: Response) {
 
     const query = `query GetQuestion($questionId: String!) {
         getQuestion(questionId: $questionId) {
+
           id
           question
           likes
@@ -235,34 +248,44 @@ export async function getComments(req: Request, res: Response) {
       sortBy: req.body.sortBy,
     };
 
-    const query = `query getComments($questionId: String!, $enneagramTypes: [String], $dateRange: String, $sortBy: String) {
-        getComments(questionId: $questionId, enneagramTypes: $enneagramTypes, dateRange: $dateRange, sortBy: $sortBy) {
-          id
-          comment
-          likes
-          dateCreated
-          author {
-            id
-            enneagramId
-          }
+    const query = `query getSortedComments($questionId: String!, $enneagramTypes: [String], $dateRange: String, $sortBy: String) {
+        getSortedComments(questionId: $questionId, enneagramTypes: $enneagramTypes, dateRange: $dateRange, sortBy: $sortBy) {
           comments {
             id
             comment
+            likes
+            dateCreated
             author {
               id
               enneagramId
             }
-            likes
             comments {
-              id
+              comments {
+                id
+                comment
+                likes
+                dateCreated
+                author {
+                  id
+                  enneagramId
+                }
+                comments {
+                  comments {
+                    id
+                  }
+                  count
+                }
+              }
+              count
             }
           }
+          count
         }
       }`;
 
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
-      res.json(resp.data.getComments);
+      res.json(resp.data.getSortedComments);
     } else {
       res.status(400).send(resp.errors);
     }
