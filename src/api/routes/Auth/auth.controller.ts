@@ -4,9 +4,10 @@ import { Request, Response } from "express";
 import { verify } from "jsonwebtoken";
 import { createAccessToken, createRefreshToken } from "../../../config/auth";
 import { pingGraphql } from "../../../helpers/pingGraphql";
+import { forgotPass } from "../Auth/forgotPassword";
 const saltRounds = 10;
 
-import { notificationsSetup } from '../Notifications/notifications'
+import { notificationsSetup } from "../Notifications/notifications";
 export async function getAll(req: Request, res: Response): Promise<any> {
   try {
     const query = `query Users() {
@@ -29,7 +30,7 @@ export async function getAll(req: Request, res: Response): Promise<any> {
   }
 }
 
-export async function getUser(req: Request, res: Response) {
+export async function getUserById(req: Request, res: Response) {
   const variables = {
     // tslint:disable-next-line: no-string-literal
     email: req["payload"].userId,
@@ -224,38 +225,47 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
     const variables = {
       email,
     };
-    const query = `mutation RevokeRefreshTokensForUser($email: String!) {
-      revokeRefreshTokensForUser(email: $email)
+    const query = `mutation Recover($email: String!) {
+      recover(email: $email){
+        resetPasswordToken
+      }
     }`;
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
-      const nodemailer = require("nodemailer");
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.FORGOT_PASSWORD_EMAIL,
-          pass: process.env.FORGOT_PASSWORD_EMAIL_PASSWORD,
-        },
-      });
+      const resetToken = resp.data.recover.resetPasswordToken;
+      if(resetToken){
+        const link = process.env.ORIGIN + "/reset/" + resetToken;
 
-      // todo send actual reset link
-      const mailOptions = {
-        from: process.env.FORGOT_PASSWORD_EMAIL,
-        to: email,
-        subject: "Forgot Password",
-        html: "<h1>Forgot Password Link</h1><p>That was easy!</p>",
-      };
-      try {
-        const sent = await transporter.sendMail(mailOptions);
-        if (sent) {
-          res.send("Email sent: " + sent.response);
+        const nodemailer = require("nodemailer");
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.FORGOT_PASSWORD_EMAIL,
+            pass: process.env.FORGOT_PASSWORD_EMAIL_PASSWORD,
+          },
+        });
+
+        // todo send actual reset link
+        const mailOptions = {
+          from: process.env.FORGOT_PASSWORD_EMAIL,
+          to: email,
+          subject: "Forgot Password",
+          html: forgotPass(link),
+        };
+        try {
+          const sent = await transporter.sendMail(mailOptions);
+          if (sent) {
+            res.send("Email sent: " + sent.response);
+          }
+        } catch (error) {
+          console.log(error);
+          res.status(400).send("Failed to send Forgot Password Link");
         }
-      } catch (error) {
-        console.log(error);
-        res.status(400).send("Failed to send Forgot Password Link");
+      } else {
+        res.status(400).send("Failed to get User");
       }
     } else {
-      res.status(400).send(resp.errors);
+      res.status(400).send("Failed to get User");
     }
   } catch (error) {
     res.status(400).send(error);
@@ -302,7 +312,7 @@ export const doRefreshToken = async (req: Request, res: Response, next) => {
     } else if (user.tokenVersion !== payload.tokenVersion) {
       return res.send({ ok: false, accessToken: "" });
     } else {
-      notificationsSetup(payload.userId)
+      notificationsSetup(payload.userId);
 
       res.send({
         ok: true,
@@ -367,7 +377,70 @@ export const enter = async (req: Request, res: Response) => {
   // try {
   // console.log("enter");
   res.status(200).send("enter");
-  // } catch (error) {
-  //   res.status(403);
-  // }
+};
+
+export const reset = async (req: Request, res: Response) => {
+  try {
+    const variables = {
+      // tslint:disable-next-line: no-string-literal
+      resetPasswordToken: req.params.token,
+    };
+
+    const query = `mutation Reset($resetPasswordToken: String!) {
+    reset(resetPasswordToken: $resetPasswordToken){
+        id
+      }
+    }`;
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp.data.reset);
+    } else {
+      res.status(400).send("Password reset token is invalid or has expired.");
+    }
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const { password } = req.body;
+  try {
+    const hash = await bcrypt.hash(password, saltRounds);
+    const variables = {
+      password: hash,
+      resetPasswordToken: req.params.token,
+    };
+    const query = `mutation ResetPassword($password: String!, $resetPasswordToken: String!) {
+      resetPassword(password: $password, resetPasswordToken: $resetPasswordToken){
+        email
+      }
+    }`;
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      const user = resp.data.resetPassword;
+
+      const nodemailer = require("nodemailer");
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.FORGOT_PASSWORD_EMAIL,
+          pass: process.env.FORGOT_PASSWORD_EMAIL_PASSWORD,
+        },
+      });
+
+      const mailOptions = {
+        to: user.email,
+        from: process.env.FORGOT_PASSWORD_EMAIL,
+        subject: "Your password has been changed",
+        text: `<h1>Hi from 9takes</h1> \n 
+            This is a confirmation that the password for your account ${user.email} has just been changed.\n`,
+      };
+      const sent = await transporter.sendMail(mailOptions);
+      if (sent) {
+        res.send("Your password has been updated.");
+      }
+    }
+  } catch (error) {
+    res.status(403).send(error);
+  }
 };
