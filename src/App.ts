@@ -3,16 +3,19 @@ import * as cors from "cors";
 import * as express from "express";
 import * as helmet from "helmet";
 import * as morgan from "morgan";
-import * as errorHandler from "./helpers/errorHandler"
 
 import api from "./api/index";
+import * as errorHandler from "./helpers/errorHandler"
 
 const corsOptions = {
   origin: [
     process.env.ORIGIN,
-    // 'http://localhost:3000',
-    // 'http://localhost:3000/',
-    // 'http://localhost:7357'
+    "https://9takes.com/",
+    "https://9takes.com:3001",
+    "https://9takes.com:3001/*",
+    "http://9takes.com:3001",
+    "http://9takes.com:3001/"
+
   ],
   credentials: true,
 };
