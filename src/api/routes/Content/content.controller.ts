@@ -63,7 +63,7 @@ export async function addContent(req: Request, res: Response) {
             likes
             dateCreated
             comments{
-              comment{
+              comments{
                 id
                 comment
                 likes
