@@ -16,3 +16,19 @@ export interface ISingleDoc {
     rootNode: boolean;
   };
 }
+
+export interface IQuestionHit {
+  _index: string;
+  _type: string;
+  _id: string;
+  _score: string;
+  _source: {
+    question: string;
+    authorId: string;
+    comments?: number;
+    likes?: number;
+    subscriptions?: number;
+    createdDate: string;
+    updatedDate: string;
+  };
+}

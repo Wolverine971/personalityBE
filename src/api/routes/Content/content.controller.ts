@@ -36,6 +36,9 @@ export async function addContent(req: Request, res: Response) {
             // tslint:disable-next-line: no-string-literal
             authorId: req["payload"].userId,
             text: fields.text,
+            comments: 0,
+            likes: 0,
+            createdDate: new Date()
           },
         });
         id = esResp._id;
@@ -251,6 +254,15 @@ export const getImage = async (img: any) => {
 
 export async function addContentLike(req: Request, res: Response) {
   try {
+    await client.update({
+      index: req.params.enneaType,
+      id: req.params.contentId,
+      body: {
+        script: {
+          source: "ctx._source.likes++",
+        },
+      },
+    });
     const variables = {
       // tslint:disable-next-line: no-string-literal
       userId: req["payload"].userId,

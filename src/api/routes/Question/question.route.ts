@@ -4,9 +4,9 @@ import { isAuth } from "../Auth/auth.controller";
 import * as questionsController from "./question.controller";
 
 const router: Router = Router();
-
-router.get("/typeAhead/:comment", questionsController.getTypeAhead);
-router.get("/add/:question", isAuth, questionsController.addQuestion);
+router.get("/update", questionsController.update);
+router.get("/typeAhead/:question", questionsController.getTypeAhead);
+router.get("/add/:question/:type", isAuth, questionsController.addQuestion);
 router.get(
   "/all/:pageSize/:lastDate?",
   questionsController.getQuestions
@@ -24,8 +24,9 @@ router.get(
   isAuth,
   questionsController.addSubscription
 );
-
 router.post("/sort/:questionId", isAuth, questionsController.getComments);
 
 router.put("/notifications", isAuth, questionsController.clearNotifications);
+
+
 export default router;

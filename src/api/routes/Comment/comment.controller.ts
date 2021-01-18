@@ -4,31 +4,6 @@ import { pingGraphql } from "../../../helpers/pingGraphql";
 // tslint:disable-next-line: no-var-requires
 import { client } from "../../elasticsearch";
 
-export async function addLike(req: Request, res: Response) {
-  try {
-    const variables = {
-      // tslint:disable-next-line: no-string-literal
-      userId: req["payload"].userId,
-      id: req.params.commentId,
-      type: "comment",
-      operation: req.params.operation,
-    };
-
-    const query = `mutation AddLike($userId: String!, $id: String!, $type: String!, $operation: String!) {
-        addLike(userId: $userId, id: $id, type: $type, operation: $operation)
-      }`;
-    const resp = await pingGraphql(query, variables);
-    if (!resp.errors) {
-      res.json(resp);
-    } else {
-      res.status(400).send(resp.errors);
-    }
-  } catch (error) {
-    console.log(error);
-    res.status(400).send(error.message);
-  }
-}
-
 export async function getComment(req: Request, res: Response) {
   try {
     const variables = {
@@ -90,6 +65,8 @@ export async function addComment(req: Request, res: Response) {
         // tslint:disable-next-line: no-string-literal
         authorId: req["payload"].userId,
         comment: req.body.comment,
+        comments: 0,
+        likes: 0,
         createdDate: date,
       },
     })
@@ -100,9 +77,31 @@ export async function addComment(req: Request, res: Response) {
           id: req.params.id,
           type: "_doc",
           body: {
-            doc: {
-              updatedDate: date,
-            },
+            script: {
+              source: 'ctx._source.comments++'
+            }
+          },
+        });
+      } else if (req.params.index === "comment") {
+        await client.update({
+          index: "comment",
+          id: req.params.id,
+          type: "_doc",
+          body: {
+            script: {
+              source: 'ctx._source.comments++'
+            }
+          },
+        });
+      } else {
+        await client.update({
+          index: req.params.enneaType,
+          id: req.params.id,
+          type: "_doc",
+          body: {
+            script: {
+              source: 'ctx._source.comments++'
+            }
           },
         });
       }
@@ -149,6 +148,15 @@ export async function addComment(req: Request, res: Response) {
 
 export async function addCommentLike(req: Request, res: Response) {
   try {
+    await client.update({
+      index: 'comment',
+      id: req.params.commentId,
+      body: {
+        script: {
+          source: 'ctx._source.likes++'
+        }
+      }
+    })
     const variables = {
       // tslint:disable-next-line: no-string-literal
       userId: req["payload"].userId,

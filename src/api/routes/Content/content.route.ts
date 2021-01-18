@@ -8,7 +8,7 @@ const router: Router = Router();
 router.post("/:type", isAuth, contentController.addContent);
 router.get("/all/:type/:lastDate?", isAuth, contentController.getContent);
 router.get(
-  "/like/:contentId/:operation",
+  "/like/:contentId/:operation/:enneaType",
   isAuth,
   contentController.addContentLike
 );
