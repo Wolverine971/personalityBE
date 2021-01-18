@@ -332,103 +332,103 @@ export async function clearNotifications(req: Request, res: Response) {
   }
 }
 
-export async function update(req: Request, res: Response) {
-  console.log("update questions");
-  try {
-    client
-      .search({
-        index: "question",
-        body: {
-          size: 100,
-        },
-      })
-      .then((resp) => {
-        const length = resp.hits.total.value;
-        resp.hits.hits.forEach(async (hit: IQuestionHit) => {
-          if (hit._source.likes === undefined) {
-            const respo = await client.update({
-              index: "question",
-              id: hit._id,
-              body: {
-                script: {
-                  source:
-                    "ctx._source.comments = 0; ctx._source.likes = 0; ctx._source.subscriptions = 0;",
-                },
-              },
-            });
-          }
-        });
-      })
-      .catch((err) => {
-        console.trace(err.message);
-        res.status(400).send(err.message);
-      });
+// export async function update(req: Request, res: Response) {
+//   console.log("update questions");
+//   try {
+//     client
+//       .search({
+//         index: "question",
+//         body: {
+//           size: 100,
+//         },
+//       })
+//       .then((resp) => {
+//         const length = resp.hits.total.value;
+//         resp.hits.hits.forEach(async (hit: IQuestionHit) => {
+//           if (hit._source.likes === undefined) {
+//             const respo = await client.update({
+//               index: "question",
+//               id: hit._id,
+//               body: {
+//                 script: {
+//                   source:
+//                     "ctx._source.comments = 0; ctx._source.likes = 0; ctx._source.subscriptions = 0;",
+//                 },
+//               },
+//             });
+//           }
+//         });
+//       })
+//       .catch((err) => {
+//         console.trace(err.message);
+//         res.status(400).send(err.message);
+//       });
 
-      client
-      .search({
-        index: "comment",
-        body: {
-          size: 320
-        },
-      })
-      .then((resp) => {
-        const length = resp.hits.total.value;
-        resp.hits.hits.forEach(async (hit: IQuestionHit) => {
-          if (hit._source.likes === undefined) {
-            const respo = await client.update({
-              index: "comment",
-              id: hit._id,
-              body: {
-                script: {
-                  inline:
-                    "ctx._source.comments = 0; ctx._source.likes = 0;",
-                },
-              },
-            });
-          }
-        });
-      })
-      .catch((err) => {
-        console.trace(err.message);
-        res.status(400).send(err.message);
-      });
+//       client
+//       .search({
+//         index: "comment",
+//         body: {
+//           size: 320
+//         },
+//       })
+//       .then((resp) => {
+//         const length = resp.hits.total.value;
+//         resp.hits.hits.forEach(async (hit: IQuestionHit) => {
+//           if (hit._source.likes === undefined) {
+//             const respo = await client.update({
+//               index: "comment",
+//               id: hit._id,
+//               body: {
+//                 script: {
+//                   inline:
+//                     "ctx._source.comments = 0; ctx._source.likes = 0;",
+//                 },
+//               },
+//             });
+//           }
+//         });
+//       })
+//       .catch((err) => {
+//         console.trace(err.message);
+//         res.status(400).send(err.message);
+//       });
 
 
-    ["1","2","3","4","5","6","7","8","9"].forEach(async (type) => {
-        client
-        .search({
-          index: type,
-          body: {
-            size: 320
-          },
-        })
-        .then((resp) => {
-          const length = resp.hits.total.value;
-          const d = new Date()
-          // "2021-01-15T19:13:27.664Z"
-          const formattedDate = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}T${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}.${d.getMilliseconds()}Z`
-          resp.hits.hits.forEach(async (hit) => {
-            if (hit._source.text !== undefined && hit._source.likes === undefined) {
-              const respo = await client.update({
-                index: type,
-                id: hit._id,
-                body: {
-                  script: {
-                    inline:
-                      `ctx._source.comments = 0; ctx._source.likes = 0; ctx._source.createdDate = '${formattedDate}';`,
-                  },
-                },
-              });
-            }
-          });
-        })
-        .catch((err) => {
-          console.trace(err.message);
-          res.status(400).send(err.message);
-        });
-      })
-  } catch (error) {
-    console.log(error);
-    res.status(400).send(error.message);
-  }
-}
+//     ["1","2","3","4","5","6","7","8","9"].forEach(async (type) => {
+//         client
+//         .search({
+//           index: type,
+//           body: {
+//             size: 320
+//           },
+//         })
+//         .then((resp) => {
+//           const length = resp.hits.total.value;
+//           const d = new Date()
+//           // "2021-01-15T19:13:27.664Z"
+//           const formattedDate = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}T${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}.${d.getMilliseconds()}Z`
+//           resp.hits.hits.forEach(async (hit) => {
+//             if (hit._source.text !== undefined && hit._source.likes === undefined) {
+//               const respo = await client.update({
+//                 index: type,
+//                 id: hit._id,
+//                 body: {
+//                   script: {
+//                     inline:
+//                       `ctx._source.comments = 0; ctx._source.likes = 0; ctx._source.createdDate = '${formattedDate}';`,
+//                   },
+//                 },
+//               });
+//             }
+//           });
+//         })
+//         .catch((err) => {
+//           console.trace(err.message);
+//           res.status(400).send(err.message);
+//         });
+//       })
+//   } catch (error) {
+//     console.log(error);
+//     res.status(400).send(error.message);
+//   }
+// }
