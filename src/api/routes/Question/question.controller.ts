@@ -432,15 +432,15 @@ export async function clearNotifications(req: Request, res: Response) {
 //   }
 // }
 
-export async function updateUsers(req: Request, res: Response) {
+// export async function updateUsers(req: Request, res: Response) {
 
-  const query = `query ChangeField{
-    changeField
-  }`;
-  const resp = await pingGraphql(query);
-  if (!resp.errors) {
-    res.json(resp);
-  } else {
-    res.status(400).send(resp.errors);
-  }
-}
+//   const query = `query ChangeField{
+//     changeField
+//   }`;
+//   const resp = await pingGraphql(query);
+//   if (!resp.errors) {
+//     res.json(resp);
+//   } else {
+//     res.status(400).send(resp.errors);
+//   }
+// }
