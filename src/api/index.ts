@@ -15,7 +15,7 @@ router.use("/content", content);
 router.use("/dashboard", dashboard);
 
 router.get("/", (req, res) => {
-  res.send("<h1>Scraper API Up</h1>");
+  res.send("<h1>yup</h1>");
 });
 
 export default router;
