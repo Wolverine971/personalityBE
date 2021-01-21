@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import { verify } from "jsonwebtoken";
 import { createAccessToken, createRefreshToken } from "../../../config/auth";
 import { pingGraphql } from "../../../helpers/pingGraphql";
-import { forgotPass } from "../Auth/forgotPassword";
+import { confirmation, forgotPass } from "./email";
 const saltRounds = 10;
 
 import { notificationsSetup } from "../Notifications/notifications";
@@ -150,11 +150,16 @@ export async function login(req: Request, res: Response) {
         enneagramId
         mbtiId
         tokenVersion
+        confirmedUser
       }
     }`;
     let user = null;
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
+      if (!resp.data.getUserByEmail.confirmedUser) {
+        res.status(400).send("Email not confirmed");
+        return;
+      }
       user = resp.data.getUserByEmail;
     } else {
       res.status(400).send(resp.errors);
@@ -197,26 +202,96 @@ export async function register(req: Request, res: Response) {
   const { email, password, enneagramType } = req.body;
 
   try {
-    const hash = await bcrypt.hash(password, saltRounds);
-    const variables = {
+    let variables: any = {
       email,
-      password: hash,
-      enneagramType
     };
+    let query: string = `query GetUserByEmail($email: String!) {
+      getUserByEmail(email: $email){
+        email
+        confirmedUser
+      }
+    }`;
+    let resp = await pingGraphql(query, variables);
+    if(!resp.data.getUserByEmail || !resp.data.getUserByEmail.confirmedUser){
 
-    const query = `mutation CreateUser($email: String!, $password: String!, $enneagramType: String!) {
-      createUser(email: $email, password: $password, enneagramType: $enneagramType)
-        }`;
-    const resp = await pingGraphql(query, variables);
-    if (!resp.errors) {
-      return res.send("User Created");
+      const hash = await bcrypt.hash(password, saltRounds);
+      variables = {
+        email,
+        password: hash,
+        enneagramType,
+      };
+
+      query = `mutation CreateUser($email: String!, $password: String!, $enneagramType: String!) {
+        createUser(email: $email, password: $password, enneagramType: $enneagramType){
+          email,
+          confirmationToken
+        }
+          }`;
+      resp = await pingGraphql(query, variables);
+      if (!resp.errors) {
+        const confirmationToken = resp.data.createUser.confirmationToken;
+        if (confirmationToken) {
+          const link = process.env.ORIGIN + "/confirm/" + confirmationToken;
+
+          const nodemailer = require("nodemailer");
+          const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user: process.env.FORGOT_PASSWORD_EMAIL,
+              pass: process.env.FORGOT_PASSWORD_EMAIL_PASSWORD,
+            },
+          });
+
+          // todo send actual reset link
+          const mailOptions = {
+            from: process.env.FORGOT_PASSWORD_EMAIL,
+            to: email,
+            subject: "Confirm Email Address",
+            html: confirmation(link),
+          };
+          try {
+            const sent = await transporter.sendMail(mailOptions);
+            if (sent) {
+              return res.send("Confirmation email sent: " + sent.response);
+            }
+          } catch (error) {
+            console.log(error);
+            res.status(400).send("Failed Register");
+          }
+        } else {
+          res.status(400).send("Failed Register");
+        }
+      } else {
+        res.status(400).send("Failed Register");
+      }
     } else {
-      res.status(400).send(resp.errors);
+      res.status(400).send("User already exists, try logging on")
     }
+
   } catch (error) {
     res.status(400).send("Failed to Register User");
   }
 }
+
+export const confirmUser = async (req: Request, res: Response, next) => {
+  const { confirmationToken } = req.params;
+  try {
+    const variables = {
+      confirmationToken,
+    };
+    const query = `mutation ConfirmUser($confirmationToken: String!) {
+      confirmUser(confirmationToken: $confirmationToken)
+    }`;
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors && resp.data && resp.data.confirmUser) {
+      res.send("User Confirmed");
+    } else {
+      res.status(400).send("Failed to Confirm User");
+    }
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
 
 export const forgotPassword = async (req: Request, res: Response, next) => {
   // revokeRefreshTokens
@@ -233,7 +308,7 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
       const resetToken = resp.data.recover.resetPasswordToken;
-      if(resetToken){
+      if (resetToken) {
         const link = process.env.ORIGIN + "/reset/" + resetToken;
 
         const nodemailer = require("nodemailer");

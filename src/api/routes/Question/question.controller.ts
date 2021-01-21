@@ -51,7 +51,7 @@ export async function addQuestion(req: Request, res: Response) {
           question
           likes
           subscribers
-          commentorIds
+          commenterIds
           dateCreated
           author {
             id
@@ -93,7 +93,7 @@ export async function getQuestions(req: Request, res: Response) {
           question
           likes
           subscribers
-          commentorIds
+          commenterIds
           dateCreated
           author {
             id
@@ -162,7 +162,7 @@ export async function getQuestion(req: Request, res: Response) {
           question
           likes
           subscribers
-          commentorIds
+          commenterIds
           dateCreated
           author {
             id
@@ -214,7 +214,7 @@ export async function getJustQuestion(req: Request, res: Response) {
           question
           likes
           subscribers
-          commentorIds
+          commenterIds
           dateCreated
         }
       }`;
@@ -393,7 +393,6 @@ export async function clearNotifications(req: Request, res: Response) {
 //         res.status(400).send(err.message);
 //       });
 
-
 //     ["1","2","3","4","5","6","7","8","9"].forEach(async (type) => {
 //         client
 //         .search({
@@ -432,3 +431,16 @@ export async function clearNotifications(req: Request, res: Response) {
 //     res.status(400).send(error.message);
 //   }
 // }
+
+export async function updateUsers(req: Request, res: Response) {
+
+  const query = `query ChangeField{
+    changeField
+  }`;
+  const resp = await pingGraphql(query);
+  if (!resp.errors) {
+    res.json(resp);
+  } else {
+    res.status(400).send(resp.errors);
+  }
+}

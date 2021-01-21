@@ -54,7 +54,7 @@ export async function getDashboard(req: Request, res: Response) {
             question
             likes
             subscribers
-            commentorIds
+            commenterIds
             dateCreated
             author {
               email

@@ -5,6 +5,7 @@ import * as questionsController from "./question.controller";
 
 const router: Router = Router();
 // router.get("/update", questionsController.update);
+router.get("/update", questionsController.updateUsers)
 router.get("/typeAhead/:question", questionsController.getTypeAhead);
 router.get("/add/:question/:type", isAuth, questionsController.addQuestion);
 router.get(
