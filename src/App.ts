@@ -11,8 +11,10 @@ const corsOptions = {
   origin: [
     process.env.ORIGIN,
     "https://9takes.com/",
-    "https://www.9takes.com/",
     "https://9takes.com:3001",
+    
+    "https://www.9takes.com",
+    "https://www.9takes.com/",
     "https://www.9takes.com:3001",
     "https://9takes.com:3001/*",
     "http://9takes.com:3001",
