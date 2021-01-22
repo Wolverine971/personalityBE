@@ -253,6 +253,8 @@ export async function register(req: Request, res: Response) {
             const sent = await transporter.sendMail(mailOptions);
             if (sent) {
               return res.send("Confirmation email sent: " + sent.response);
+            } else {
+              res.status(400).send("Failed to Generate Confirmation Email");
             }
           } catch (error) {
             console.log(error);

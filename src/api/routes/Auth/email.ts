@@ -199,7 +199,7 @@ export const confirmation = (link) => {
 
         <meta charset="utf-8">
         <meta http-equiv="x-ua-compatible" content="ie=edge">
-        <title>Password Reset</title>
+        <title>Confirm Account</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style type="text/css">
         body,
@@ -282,7 +282,7 @@ export const confirmation = (link) => {
 
         <!-- start preheader -->
         <div class="preheader" style="display: none; max-width: 0; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #fff; opacity: 0;">
-          Reset Password
+          Confirm Account
         </div>
         <!-- end preheader -->
 
@@ -341,7 +341,7 @@ export const confirmation = (link) => {
                           <table border="0" cellpadding="0" cellspacing="0">
                             <tr>
                               <td align="center" bgcolor="#1a82e2" style="border-radius: 6px;">
-                                <a href="${link}" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 16px; color: #ffffff; text-decoration: none; border-radius: 6px;">Reset Password</a>
+                                <a href="${link}" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 16px; color: #ffffff; text-decoration: none; border-radius: 6px;">Confirm Account</a>
                               </td>
                             </tr>
                           </table>
