@@ -237,7 +237,7 @@ export async function addSubscription(req: Request, res: Response) {
       id: req.params.questionId,
       body: {
         script: {
-          source: "ctx._source.subscription++",
+          source: "ctx._source.subscriptions++",
         },
       },
     });

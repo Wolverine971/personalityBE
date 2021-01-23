@@ -6,12 +6,12 @@ import * as contentController from "./content.controller";
 const router: Router = Router();
 
 router.post("/:type", isAuth, contentController.addContent);
-router.get("/all/:type/:lastDate?", isAuth, contentController.getContent);
+router.get("/all/:type/:lastDate?", contentController.getContent);
 router.get(
   "/like/:contentId/:operation/:enneaType",
   isAuth,
   contentController.addContentLike
 );
-router.get("/loadMore/:parentId/:lastDate", isAuth, contentController.loadMore);
+router.get("/loadMore/:parentId/:lastDate", contentController.loadMore);
 
 export default router;
