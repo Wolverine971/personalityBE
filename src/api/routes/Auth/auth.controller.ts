@@ -208,11 +208,12 @@ export async function register(req: Request, res: Response) {
     let query: string = `query GetUserByEmail($email: String!) {
       getUserByEmail(email: $email){
         email
+        confirmationToken
         confirmedUser
       }
     }`;
     let resp = await pingGraphql(query, variables);
-    if (!resp.data.getUserByEmail || !resp.data.getUserByEmail.confirmedUser) {
+    if (!resp.data.getUserByEmail) {
       const hash = await bcrypt.hash(password, saltRounds);
       variables = {
         email,
@@ -230,28 +231,7 @@ export async function register(req: Request, res: Response) {
       if (!resp.errors) {
         const confirmationToken = resp.data.createUser.confirmationToken;
         if (confirmationToken) {
-          const link = process.env.ORIGIN + "/confirm/" + confirmationToken;
-
-          const transporter: any = await getTransport()
-
-          // todo send actual reset link
-          const mailOptions = {
-            from: process.env.FORGOT_PASSWORD_EMAIL,
-            to: email,
-            subject: "Confirm Email Address",
-            html: confirmation(link),
-          };
-          try {
-            const sent: any = await transporter.sendMail(mailOptions);
-            if (sent) {
-              return res.send("Confirmation email sent: " + sent.response);
-            } else {
-              res.status(400).send("Failed to Generate Confirmation Email");
-            }
-          } catch (error) {
-            console.log(error);
-            res.status(400).send("Failed Register");
-          }
+          return sendConfirmation(confirmationToken, email, res);
         } else {
           res.status(400).send("Failed Register");
         }
@@ -259,7 +239,14 @@ export async function register(req: Request, res: Response) {
         res.status(400).send("Failed Register");
       }
     } else {
-      res.status(400).send("User already exists, try logging on");
+      if (!resp.data.getUserByEmail.confirmedUser) {
+        return sendConfirmation(
+          resp.data.getUserByEmail.confirmationToken,
+          email,
+          res
+        );
+      }
+      return res.status(400).send("User already exists, try logging on");
     }
   } catch (error) {
     res.status(400).send("Failed to Register User");
@@ -304,7 +291,7 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
       if (resetToken) {
         const link = process.env.ORIGIN + "/reset/" + resetToken;
 
-        const transporter: any = await getTransport()
+        const transporter: any = await getTransport();
 
         // todo send actual reset link
         const mailOptions = {
@@ -480,7 +467,7 @@ export const resetPassword = async (req: Request, res: Response) => {
     if (!resp.errors) {
       const user = resp.data.resetPassword;
 
-      const transporter: any = await getTransport()
+      const transporter: any = await getTransport();
       const mailOptions = {
         to: user.email,
         from: process.env.FORGOT_PASSWORD_EMAIL,
@@ -495,6 +482,31 @@ export const resetPassword = async (req: Request, res: Response) => {
     }
   } catch (error) {
     res.status(403).send(error);
+  }
+};
+
+const sendConfirmation = async (confirmationToken, email, res) => {
+  try {
+    const link = process.env.ORIGIN + "/confirm/" + confirmationToken;
+    const transporter: any = await getTransport();
+
+    // todo send actual reset link
+    const mailOptions = {
+      from: process.env.FORGOT_PASSWORD_EMAIL,
+      to: email,
+      subject: "Confirm Email Address",
+      html: confirmation(link),
+    };
+  
+    const sent: any = await transporter.sendMail(mailOptions);
+    if (sent) {
+      return res.send("Confirmation email sent: " + sent.response);
+    } else {
+      res.status(400).send("Failed to Generate Confirmation Email");
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send("Failed Register");
   }
 };
 
@@ -528,6 +540,3 @@ const getTransport = async () => {
     },
   });
 };
-// GMAIL_CLIENT_ID=647301480307-75t3hlhaqidsp8kljfvih69f525s9bml.apps.googleusercontent.com
-// GMAIL_SECRET=gD70lBYK0VYOJqz5O6QzVC-4
-// GMAIL_AUTH
