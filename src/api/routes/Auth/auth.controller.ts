@@ -212,8 +212,7 @@ export async function register(req: Request, res: Response) {
       }
     }`;
     let resp = await pingGraphql(query, variables);
-    if(!resp.data.getUserByEmail || !resp.data.getUserByEmail.confirmedUser){
-
+    if (!resp.data.getUserByEmail || !resp.data.getUserByEmail.confirmedUser) {
       const hash = await bcrypt.hash(password, saltRounds);
       variables = {
         email,
@@ -233,14 +232,7 @@ export async function register(req: Request, res: Response) {
         if (confirmationToken) {
           const link = process.env.ORIGIN + "/confirm/" + confirmationToken;
 
-          const nodemailer = require("nodemailer");
-          const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-              user: process.env.FORGOT_PASSWORD_EMAIL,
-              pass: process.env.FORGOT_PASSWORD_EMAIL_PASSWORD,
-            },
-          });
+          const transporter: any = await getTransport()
 
           // todo send actual reset link
           const mailOptions = {
@@ -250,7 +242,7 @@ export async function register(req: Request, res: Response) {
             html: confirmation(link),
           };
           try {
-            const sent = await transporter.sendMail(mailOptions);
+            const sent: any = await transporter.sendMail(mailOptions);
             if (sent) {
               return res.send("Confirmation email sent: " + sent.response);
             } else {
@@ -267,9 +259,8 @@ export async function register(req: Request, res: Response) {
         res.status(400).send("Failed Register");
       }
     } else {
-      res.status(400).send("User already exists, try logging on")
+      res.status(400).send("User already exists, try logging on");
     }
-
   } catch (error) {
     res.status(400).send("Failed to Register User");
   }
@@ -313,14 +304,7 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
       if (resetToken) {
         const link = process.env.ORIGIN + "/reset/" + resetToken;
 
-        const nodemailer = require("nodemailer");
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: process.env.FORGOT_PASSWORD_EMAIL,
-            pass: process.env.FORGOT_PASSWORD_EMAIL_PASSWORD,
-          },
-        });
+        const transporter: any = await getTransport()
 
         // todo send actual reset link
         const mailOptions = {
@@ -330,7 +314,7 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
           html: forgotPass(link),
         };
         try {
-          const sent = await transporter.sendMail(mailOptions);
+          const sent: any = await transporter.sendMail(mailOptions);
           if (sent) {
             res.send("Email sent: " + sent.response);
           }
@@ -496,23 +480,15 @@ export const resetPassword = async (req: Request, res: Response) => {
     if (!resp.errors) {
       const user = resp.data.resetPassword;
 
-      const nodemailer = require("nodemailer");
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.FORGOT_PASSWORD_EMAIL,
-          pass: process.env.FORGOT_PASSWORD_EMAIL_PASSWORD,
-        },
-      });
-
+      const transporter: any = await getTransport()
       const mailOptions = {
         to: user.email,
         from: process.env.FORGOT_PASSWORD_EMAIL,
         subject: "Your password has been changed",
-        text: `<h1>Hi from 9takes</h1> \n 
+        text: `Hi from 9takes \n 
             This is a confirmation that the password for your account ${user.email} has just been changed.\n`,
       };
-      const sent = await transporter.sendMail(mailOptions);
+      const sent: any = await transporter.sendMail(mailOptions);
       if (sent) {
         res.send("Your password has been updated.");
       }
@@ -521,3 +497,37 @@ export const resetPassword = async (req: Request, res: Response) => {
     res.status(403).send(error);
   }
 };
+
+const getTransport = async () => {
+  const nodemailer = require("nodemailer");
+  const { google } = require("googleapis");
+
+  const OAuth2 = google.auth.OAuth2;
+
+  const myOAuth2Client = new OAuth2(
+    process.env.GMAIL_CLIENT_ID,
+    process.env.GMAIL_SECRET,
+    "https://developers.google.com/oauthplayground"
+  );
+
+  myOAuth2Client.setCredentials({
+    refresh_token: process.env.GMAIL_REFRESH,
+  });
+
+  const myAccessToken = await myOAuth2Client.getAccessToken();
+
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: process.env.FORGOT_PASSWORD_EMAIL, // your gmail account you used to set the project up in google cloud console"
+      clientId: process.env.GMAIL_CLIENT_ID,
+      clientSecret: process.env.GMAIL_SECRET,
+      refreshToken: process.env.GMAIL_REFRESH,
+      accessToken: myAccessToken, // access token variable we defined earlier
+    },
+  });
+};
+// GMAIL_CLIENT_ID=647301480307-75t3hlhaqidsp8kljfvih69f525s9bml.apps.googleusercontent.com
+// GMAIL_SECRET=gD70lBYK0VYOJqz5O6QzVC-4
+// GMAIL_AUTH
