@@ -234,10 +234,10 @@ export async function register(req: Request, res: Response) {
         if (confirmationToken) {
           return sendConfirmation(confirmationToken, email, res);
         } else {
-          res.status(400).send("Failed Register");
+          res.status(500).send("Failed Register");
         }
       } else {
-        res.status(400).send("Failed Register");
+        res.status(500).send("Failed Register");
       }
     } else {
       if(resp.errors){
@@ -253,7 +253,7 @@ export async function register(req: Request, res: Response) {
       return res.status(400).send("User already exists, try logging on");
     }
   } catch (error) {
-    res.status(400).send("Failed to Register User");
+    res.status(500).send("Failed to Register User");
   }
 }
 
@@ -308,19 +308,21 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
           const sent: any = await transporter.sendMail(mailOptions);
           if (sent) {
             res.send("Email sent: " + sent.response);
+          } else {
+            res.status(500).send("Forgot Password Link not sent");
           }
         } catch (error) {
           console.log(error);
-          res.status(400).send("Failed to send Forgot Password Link");
+          res.status(500).send("Failed to send Forgot Password Link");
         }
       } else {
-        res.status(400).send("Failed to get User");
+        res.status(500).send("Failed to generate reset token");
       }
     } else {
-      res.status(400).send("Failed to get User");
+      res.status(500).send("Failed to get User");
     }
   } catch (error) {
-    res.status(400).send(error);
+    res.status(500).send(error);
   }
   // }
 };
@@ -485,7 +487,7 @@ export const resetPassword = async (req: Request, res: Response) => {
       }
     }
   } catch (error) {
-    res.status(403).send(error);
+    res.status(500).send(error);
   }
 };
 
@@ -509,11 +511,11 @@ const sendConfirmation = async (confirmationToken, email, res) => {
     if (sent) {
       return res.send("Confirmation email sent: " + sent.response);
     } else {
-      res.status(400).send("Failed to Generate Confirmation Email");
+      res.status(500).send("Failed to Generate Confirmation Email");
     }
   } catch (error) {
     console.log(error);
-    res.status(400).send("Failed Register");
+    res.status(500).send("Failed Register");
   }
 };
 
