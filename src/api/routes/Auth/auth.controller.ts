@@ -519,7 +519,7 @@ const getTransport = async () => {
   const myOAuth2Client = new OAuth2(
     process.env.GMAIL_CLIENT_ID,
     process.env.GMAIL_SECRET,
-    "https://developers.google.com/oauthplayground"
+    process.env.ORIGIN
   );
 
   myOAuth2Client.setCredentials({
