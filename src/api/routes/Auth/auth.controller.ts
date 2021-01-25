@@ -200,7 +200,6 @@ export async function logout(req: Request, res: Response) {
 
 export async function register(req: Request, res: Response) {
   const { email, password, enneagramType } = req.body;
-
   try {
     let variables: any = {
       email,
@@ -213,7 +212,8 @@ export async function register(req: Request, res: Response) {
       }
     }`;
     let resp = await pingGraphql(query, variables);
-    if (!resp.data.getUserByEmail) {
+    if (!resp.data.getUserByEmail && !resp.errors) {
+      console.log('GetUserByEmail success')
       const hash = await bcrypt.hash(password, saltRounds);
       variables = {
         email,
@@ -229,6 +229,7 @@ export async function register(req: Request, res: Response) {
           }`;
       resp = await pingGraphql(query, variables);
       if (!resp.errors) {
+        console.log('CreateUser success')
         const confirmationToken = resp.data.createUser.confirmationToken;
         if (confirmationToken) {
           return sendConfirmation(confirmationToken, email, res);
@@ -239,7 +240,10 @@ export async function register(req: Request, res: Response) {
         res.status(400).send("Failed Register");
       }
     } else {
-      if (!resp.data.getUserByEmail.confirmedUser) {
+      if(resp.errors){
+        return res.status(400).send("User already exists, try logging on");
+      }
+      else if (!resp.data.getUserByEmail.confirmedUser) {
         return sendConfirmation(
           resp.data.getUserByEmail.confirmationToken,
           email,
@@ -487,8 +491,10 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 const sendConfirmation = async (confirmationToken, email, res) => {
   try {
+    console.log('got to sendConfirmation')
     const link = process.env.ORIGIN + "/confirm/" + confirmationToken;
     const transporter: any = await getTransport();
+    console.log('got transport')
 
     // todo send actual reset link
     const mailOptions = {
@@ -497,8 +503,9 @@ const sendConfirmation = async (confirmationToken, email, res) => {
       subject: "Confirm Email Address",
       html: confirmation(link),
     };
-  
+    console.log('sending email')
     const sent: any = await transporter.sendMail(mailOptions);
+    console.log(sent)
     if (sent) {
       return res.send("Confirmation email sent: " + sent.response);
     } else {
@@ -511,32 +518,37 @@ const sendConfirmation = async (confirmationToken, email, res) => {
 };
 
 const getTransport = async () => {
-  const nodemailer = require("nodemailer");
-  const { google } = require("googleapis");
+  try {
+    console.log('getting transport')
+    const nodemailer = require("nodemailer");
+    const { google } = require("googleapis");
 
-  const OAuth2 = google.auth.OAuth2;
+    const OAuth2 = google.auth.OAuth2;
 
-  const myOAuth2Client = new OAuth2(
-    process.env.GMAIL_CLIENT_ID,
-    process.env.GMAIL_SECRET,
-    process.env.ORIGIN
-  );
+    const myOAuth2Client = new OAuth2(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_SECRET,
+      process.env.ORIGIN
+    );
 
-  myOAuth2Client.setCredentials({
-    refresh_token: process.env.GMAIL_REFRESH,
-  });
+    myOAuth2Client.setCredentials({
+      refresh_token: process.env.GMAIL_REFRESH,
+    });
 
-  const myAccessToken = await myOAuth2Client.getAccessToken();
+    const myAccessToken = await myOAuth2Client.getAccessToken();
 
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      type: "OAuth2",
-      user: process.env.FORGOT_PASSWORD_EMAIL, // your gmail account you used to set the project up in google cloud console"
-      clientId: process.env.GMAIL_CLIENT_ID,
-      clientSecret: process.env.GMAIL_SECRET,
-      refreshToken: process.env.GMAIL_REFRESH,
-      accessToken: myAccessToken, // access token variable we defined earlier
-    },
-  });
+    return nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.FORGOT_PASSWORD_EMAIL, // your gmail account you used to set the project up in google cloud console"
+        clientId: process.env.GMAIL_CLIENT_ID,
+        clientSecret: process.env.GMAIL_SECRET,
+        refreshToken: process.env.GMAIL_REFRESH,
+        accessToken: myAccessToken, // access token variable we defined earlier
+      },
+    });
+  } catch(error){
+    return error
+  }
 };
