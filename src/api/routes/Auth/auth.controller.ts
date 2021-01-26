@@ -5,6 +5,7 @@ import { verify } from "jsonwebtoken";
 import { createAccessToken, createRefreshToken } from "../../../config/auth";
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { confirmation, forgotPass } from "./email";
+const fetch = require("node-fetch");
 const saltRounds = 10;
 
 import { notificationsSetup } from "../Notifications/notifications";
@@ -213,7 +214,7 @@ export async function register(req: Request, res: Response) {
     }`;
     let resp = await pingGraphql(query, variables);
     if (!resp.data.getUserByEmail && !resp.errors) {
-      console.log('GetUserByEmail success')
+      console.log("GetUserByEmail success");
       const hash = await bcrypt.hash(password, saltRounds);
       variables = {
         email,
@@ -229,7 +230,7 @@ export async function register(req: Request, res: Response) {
           }`;
       resp = await pingGraphql(query, variables);
       if (!resp.errors) {
-        console.log('CreateUser success')
+        console.log("CreateUser success");
         const confirmationToken = resp.data.createUser.confirmationToken;
         if (confirmationToken) {
           return sendConfirmation(confirmationToken, email, res);
@@ -240,10 +241,9 @@ export async function register(req: Request, res: Response) {
         res.status(500).send("Failed Register");
       }
     } else {
-      if(resp.errors){
+      if (resp.errors) {
         return res.status(400).send("User already exists, try logging on");
-      }
-      else if (!resp.data.getUserByEmail.confirmedUser) {
+      } else if (!resp.data.getUserByEmail.confirmedUser) {
         return sendConfirmation(
           resp.data.getUserByEmail.confirmationToken,
           email,
@@ -294,18 +294,12 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
       const resetToken = resp.data.recover.resetPasswordToken;
       if (resetToken) {
         const link = process.env.ORIGIN + "/reset/" + resetToken;
-
-        const transporter: any = await getTransport();
-
-        // todo send actual reset link
-        const mailOptions = {
-          from: process.env.FORGOT_PASSWORD_EMAIL,
-          to: email,
-          subject: "Forgot Password",
-          html: forgotPass(link),
-        };
         try {
-          const sent: any = await transporter.sendMail(mailOptions);
+          const sent: any = await sendEmail(
+            email,
+            "Forgot Password",
+            forgotPass(link)
+          );
           if (sent) {
             res.send("Email sent: " + sent.response);
           } else {
@@ -472,16 +466,13 @@ export const resetPassword = async (req: Request, res: Response) => {
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
       const user = resp.data.resetPassword;
-
-      const transporter: any = await getTransport();
-      const mailOptions = {
-        to: user.email,
-        from: process.env.FORGOT_PASSWORD_EMAIL,
-        subject: "Your password has been changed",
-        text: `Hi from 9takes \n 
-            This is a confirmation that the password for your account ${user.email} has just been changed.\n`,
-      };
-      const sent: any = await transporter.sendMail(mailOptions);
+      const body = `Hi from 9takes \n 
+      This is a confirmation that the password for your account ${user.email} has just been changed.\n`;
+      const sent: any = await sendEmail(
+        user.email,
+        "Your password has been changed",
+        body
+      );
       if (sent) {
         res.send("Your password has been updated.");
       }
@@ -493,21 +484,15 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 const sendConfirmation = async (confirmationToken, email, res) => {
   try {
-    console.log('got to sendConfirmation')
+    console.log("got to sendConfirmation");
     const link = process.env.ORIGIN + "/confirm/" + confirmationToken;
-    const transporter: any = await getTransport();
-    console.log('got transport')
-
-    // todo send actual reset link
-    const mailOptions = {
-      from: process.env.FORGOT_PASSWORD_EMAIL,
-      to: email,
-      subject: "Confirm Email Address",
-      html: confirmation(link),
-    };
-    console.log('sending email')
-    const sent: any = await transporter.sendMail(mailOptions);
-    console.log(sent)
+    console.log("sending email");
+    const sent: any = await sendEmail(
+      email,
+      "Confirm Email Address",
+      confirmation(link)
+    );
+    console.log(sent);
     if (sent) {
       return res.send("Confirmation email sent: " + sent.response);
     } else {
@@ -519,12 +504,10 @@ const sendConfirmation = async (confirmationToken, email, res) => {
   }
 };
 
-const getTransport = async () => {
+const getToken = async () => {
   try {
-    console.log('getting transport')
-    const nodemailer = require("nodemailer");
+    console.log("getting transport");
     const { google } = require("googleapis");
-
     const OAuth2 = google.auth.OAuth2;
 
     const myOAuth2Client = new OAuth2(
@@ -538,19 +521,50 @@ const getTransport = async () => {
     });
 
     const myAccessToken = await myOAuth2Client.getAccessToken();
+    if (myAccessToken && myAccessToken.token) {
+      return myAccessToken.token;
+    } else {
+      return false;
+    }
+  } catch (error) {
+    return error;
+  }
+};
 
-    return nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.FORGOT_PASSWORD_EMAIL, // your gmail account you used to set the project up in google cloud console"
-        clientId: process.env.GMAIL_CLIENT_ID,
-        clientSecret: process.env.GMAIL_SECRET,
-        refreshToken: process.env.GMAIL_REFRESH,
-        accessToken: myAccessToken, // access token variable we defined earlier
-      },
-    });
-  } catch(error){
-    return error
+const sendEmail = async (to: string, subject: string, body: string) => {
+  try {
+    const accessToken = await getToken();
+    if (accessToken) {
+      const encodedMail = Buffer.from(
+        'Content-Type: text/html; charset="UTF-8"\n' +
+          "MIME-Version: 1.0\n" +
+          "Content-Transfer-Encoding: 7bit\n" +
+          `to: ${to}\n` +
+          "from: usersup@gmail.com\n" +
+          `subject: ${subject}\n\n` +
+          body
+      )
+        .toString("base64")
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_");
+      const resp = await fetch(
+        "https://www.googleapis.com/gmail/v1/users/me/messages/send",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            raw: encodedMail,
+          }),
+        }
+      );
+      return await resp.json();
+    } else {
+      return false;
+    }
+  } catch (error) {
+    return error;
   }
 };

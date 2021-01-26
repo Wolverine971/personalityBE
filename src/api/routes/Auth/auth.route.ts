@@ -1,9 +1,11 @@
 import { Router } from "express";
 
 import * as controller from "./auth.controller";
+import { confirmation } from "./email";
 
 const router: Router = Router();
-
+const fetch = require("node-fetch");
+const { google } = require("googleapis");
 router.get("/getAll", controller.isAuth, controller.getAll);
 
 router.get("/getUserById", controller.isAuth, controller.getUserById);
@@ -27,7 +29,7 @@ router.post("/revoke_refresh", controller.revokeRefreshTokens);
 router.get("/leave", controller.isAuth, controller.leave);
 router.get("/enter", controller.isAuth, controller.enter);
 
-router.get('/reset/:token', controller.reset);
-router.post('/resetPassword/:token', controller.resetPassword);
+router.get("/reset/:token", controller.reset);
+router.post("/resetPassword/:token", controller.resetPassword);
 
 export default router;
