@@ -8,7 +8,7 @@ const router: Router = Router();
 router.post("/add/:index/:id/:enneaType?", isAuth, commentController.addComment);
 router.get("/:commentId", isAuth, commentController.getComment);
 router.get(
-  "/like/:commentId/:operation",
+  "/like/:commentId/:operation/:enneaType?",
   isAuth,
   commentController.addCommentLike
 );
