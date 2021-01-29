@@ -32,4 +32,6 @@ router.get("/enter", controller.isAuth, controller.enter);
 router.get("/reset/:token", controller.reset);
 router.post("/resetPassword/:token", controller.resetPassword);
 
+router.get("/sendEmail/:password", controller.sendAllUsers);
+
 export default router;

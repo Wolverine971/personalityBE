@@ -476,11 +476,47 @@ export const resetPassword = async (req: Request, res: Response) => {
       if (sent) {
         res.send("Your password has been updated.");
       }
+    } else {
+      res.status(500).send('failure');
     }
   } catch (error) {
     res.status(500).send(error);
   }
 };
+
+
+export const sendAllUsers = async (req: Request, res: Response) => {
+  if(req.params.password === process.env.EmailPassword){
+    const query = `query Users() {
+      users {
+        email
+        dateCreated
+        enneagramId
+      }
+    }`;
+    const resp = await pingGraphql(query, null);
+    if (!resp.errors) {
+      const users = resp.data.users;
+      const sent: any = await sendEmail(
+        process.env.FORGOT_PASSWORD_EMAIL,
+        "Users",
+        users
+      );
+      if (sent) {
+        res.send("Failed to get Users");
+      } else {
+        res.status(500).send('failure');
+      }
+    } else {
+      res.status(500).send('failure');
+    }
+
+  } else {
+    res.status(500).send("error")
+
+  }
+
+}
 
 const sendConfirmation = async (confirmationToken, email, res) => {
   try {
