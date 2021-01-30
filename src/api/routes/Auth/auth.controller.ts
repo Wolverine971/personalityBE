@@ -487,7 +487,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
 export const sendAllUsers = async (req: Request, res: Response) => {
   if(req.params.password === process.env.EmailPassword){
-    const query = `query Users() {
+    const query = `query Users {
       users {
         email
         dateCreated
@@ -496,14 +496,14 @@ export const sendAllUsers = async (req: Request, res: Response) => {
     }`;
     const resp = await pingGraphql(query, null);
     if (!resp.errors) {
-      const users = resp.data.users;
+      const users = await JSON.stringify(resp.data.users);
       const sent: any = await sendEmail(
         process.env.FORGOT_PASSWORD_EMAIL,
         "Users",
         users
       );
       if (sent) {
-        res.send("Failed to get Users");
+        res.send("Email Sent");
       } else {
         res.status(500).send('failure');
       }
