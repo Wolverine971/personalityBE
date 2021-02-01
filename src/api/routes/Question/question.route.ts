@@ -12,7 +12,7 @@ router.get(
   "/all/:pageSize/:lastDate?",
   questionsController.getQuestions
 );
-
+router.post("/update/:questionId", isAuth, questionsController.updateQuestion)
 router.get("/:question", isAuth, questionsController.getQuestion);
 router.get("/single/:question", questionsController.getJustQuestion);
 router.get(

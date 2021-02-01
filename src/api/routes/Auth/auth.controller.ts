@@ -484,7 +484,6 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
 };
 
-
 export const sendAllUsers = async (req: Request, res: Response) => {
   if(req.params.password === process.env.EmailPassword){
     const query = `query Users {

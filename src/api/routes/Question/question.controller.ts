@@ -53,6 +53,7 @@ export async function addQuestion(req: Request, res: Response) {
           subscribers
           commenterIds
           dateCreated
+          modified
           author {
             id
             enneagramId
@@ -99,6 +100,7 @@ export async function getQuestions(req: Request, res: Response) {
             id
             enneagramId
           }
+          modified
         }
         count
       }
@@ -164,6 +166,7 @@ export async function getQuestion(req: Request, res: Response) {
           subscribers
           commenterIds
           dateCreated
+          modified
           author {
             id
             enneagramId
@@ -209,13 +212,16 @@ export async function getJustQuestion(req: Request, res: Response) {
 
     const query = `query GetQuestion($questionId: String!) {
         getQuestion(questionId: $questionId) {
-
+          author{
+            id
+          }
           id
           question
           likes
           subscribers
           commenterIds
           dateCreated
+          modified
         }
       }`;
     const resp = await pingGraphql(query, variables);
@@ -273,7 +279,7 @@ export async function getComments(req: Request, res: Response) {
       sortBy: req.body.sortBy,
     };
 
-    const query = `query getSortedComments($questionId: String!, $enneagramTypes: [String], $dateRange: String, $sortBy: String) {
+    const query = `query GetSortedComments($questionId: String!, $enneagramTypes: [String], $dateRange: String, $sortBy: String) {
         getSortedComments(questionId: $questionId, enneagramTypes: $enneagramTypes, dateRange: $dateRange, sortBy: $sortBy) {
           comments {
             id
@@ -326,6 +332,30 @@ export async function clearNotifications(req: Request, res: Response) {
     // tslint:disable-next-line: no-string-literal
     redisClient.set(`push:notifications:${req["payload"].userId}`, "");
     res.status(200).send("ok");
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+}
+
+
+export async function updateQuestion(req: Request, res: Response) {
+  try {
+    const variables = {
+      questionId: req.params.questionId,
+      question: req.body.question
+    };
+
+    const query = `mutation UpdateQuestion($questionId: String!, $question: String) {
+      updateQuestion(questionId: $questionId, question: $question)
+      }`;
+
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp.data.updateQuestion);
+    } else {
+      res.status(400).send(resp.errors);
+    }
   } catch (error) {
     console.log(error);
     res.status(400).send(error.message);
