@@ -78,8 +78,8 @@ export async function addComment(req: Request, res: Response) {
           type: "_doc",
           body: {
             script: {
-              source: 'ctx._source.comments++'
-            }
+              source: "ctx._source.comments++",
+            },
           },
         });
       } else if (req.params.index === "comment") {
@@ -89,8 +89,8 @@ export async function addComment(req: Request, res: Response) {
           type: "_doc",
           body: {
             script: {
-              source: 'ctx._source.comments++'
-            }
+              source: "ctx._source.comments++",
+            },
           },
         });
       } else {
@@ -100,8 +100,8 @@ export async function addComment(req: Request, res: Response) {
           type: "_doc",
           body: {
             script: {
-              source: 'ctx._source.comments++'
-            }
+              source: "ctx._source.comments++",
+            },
           },
         });
       }
@@ -145,18 +145,47 @@ export async function addComment(req: Request, res: Response) {
       res.status(400).send(err.message);
     });
 }
+export async function updateComment(req: Request, res: Response) {
+  const date = new Date();
+
+  await client.update({
+    index: "comment",
+    id: req.params.id,
+    type: "_doc",
+    body: {
+      script: {
+        source: `ctx._source.comment = '${req.body.comment}'`,
+      },
+    },
+  });
+
+  const variables = {
+    commentId: req.params.id,
+    comment: req.body.comment,
+  };
+
+  const query = `mutation UpdateComment($commentId: String!, $comment: String) {
+        updateComment(commentId: $commentId, comment: $comment) 
+      }`;
+  const gqlResp = await pingGraphql(query, variables);
+  if (!gqlResp.errors) {
+    res.json(gqlResp.data.updateComment);
+  } else {
+    res.status(400).send(gqlResp.errors);
+  }
+}
 
 export async function addCommentLike(req: Request, res: Response) {
   try {
     await client.update({
-      index: 'comment',
+      index: "comment",
       id: req.params.commentId,
       body: {
         script: {
-          source: 'ctx._source.likes++'
-        }
-      }
-    })
+          source: "ctx._source.likes++",
+        },
+      },
+    });
     const variables = {
       // tslint:disable-next-line: no-string-literal
       userId: req["payload"].userId,

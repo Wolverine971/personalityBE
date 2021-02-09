@@ -6,10 +6,9 @@ import * as commentController from "./comment.controller";
 const router: Router = Router();
 
 router.post("/add/:index/:id/:enneaType?", isAuth, commentController.addComment);
+router.post("/update/:id", isAuth, commentController.updateComment);
 router.get("/:commentId", isAuth, commentController.getComment);
-router.get(
-  "/like/:commentId/:operation/:enneaType?",
-  isAuth,
+router.get("/like/:commentId/:operation/:enneaType?", isAuth,
   commentController.addCommentLike
 );
 
