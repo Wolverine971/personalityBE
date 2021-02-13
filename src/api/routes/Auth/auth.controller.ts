@@ -34,7 +34,7 @@ export async function getAll(req: Request, res: Response): Promise<any> {
 export async function getUserById(req: Request, res: Response) {
   const variables = {
     // tslint:disable-next-line: no-string-literal
-    email: req["payload"].userId,
+    id: req["payload"].userId,
   };
 
   const query = `query GetUserById($id: String!) {
@@ -322,6 +322,7 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
 };
 
 export const doRefreshToken = async (req: Request, res: Response, next) => {
+  debugger
   const token = req.params.token;
   if (!token) {
     return res.send({ ok: false, accessToken: "" });
@@ -352,7 +353,7 @@ export const doRefreshToken = async (req: Request, res: Response, next) => {
     if (!resp.errors) {
       user = resp.data.getUserById;
     } else {
-      res.status(400).send(resp.errors);
+      return res.status(400).send(resp.errors);
     }
 
     if (!user) {
