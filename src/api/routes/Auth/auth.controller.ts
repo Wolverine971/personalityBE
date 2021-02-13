@@ -322,7 +322,6 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
 };
 
 export const doRefreshToken = async (req: Request, res: Response, next) => {
-  debugger
   const token = req.params.token;
   if (!token) {
     return res.send({ ok: false, accessToken: "" });
