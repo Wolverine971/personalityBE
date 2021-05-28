@@ -8,10 +8,11 @@ export async function getRelationship(req: Request, res: Response) {
     const variables = {
       id1: req.params.id1,
       id2: req.params.id2,
+      lastDate: req.params.lastDate || "",
       pageSize: parseInt(req.params.pageSize, 10),
     };
-    const query = `query getRelationshipData($id1: String!, $id2: String!, $pageSize: Int) {
-        getRelationshipData(id1: $id1, id2: $id2, pageSize: $pageSize) {
+    const query = `query getRelationshipData($id1: String!, $id2: String!, $pageSize: Int, $lastDate: String!) {
+        getRelationshipData(id1: $id1, id2: $id2, pageSize: $pageSize, lastDate: $lastDate) {
             RelationshipData {
                 id
                 author {
@@ -21,12 +22,24 @@ export async function getRelationship(req: Request, res: Response) {
                 text
                 likes
                 comments {
-                    comments {
+                  comments {
+                    id
+                    comment
+                    likes
+                    dateCreated
+                    author {
                       id
-                      comment
+                      enneagramId
                     }
-                    count
+                    comments {
+                      comments {
+                        id
+                      }
+                      count
+                    }
                   }
+                  count
+                }
                 dateCreated
                 dateModified
             }
@@ -81,12 +94,24 @@ export async function createRelationshipData(req: Request, res: Response) {
                 text
                 likes
                 comments {
-                    comments {
+                  comments {
+                    id
+                    comment
+                    likes
+                    dateCreated
+                    author {
                       id
-                      comment
+                      enneagramId
                     }
-                    count
+                    comments {
+                      comments {
+                        id
+                      }
+                      count
+                    }
                   }
+                  count
+                }
                 dateCreated
                 dateModified
                   
@@ -101,5 +126,70 @@ export async function createRelationshipData(req: Request, res: Response) {
       });
   } catch (e) {
     console.log(e);
+  }
+}
+
+export async function addRelationshipDataLike(req: Request, res: Response) {
+  try {
+    await client.update({
+      index: "relationship",
+      id: req.params.id,
+      body: {
+        script: {
+          source: "ctx._source.likes++",
+        },
+      },
+    });
+
+    const variables = {
+      // tslint:disable-next-line: no-string-literal
+      userId: req["payload"].userId,
+      id: req.params.id,
+      type: "relationship",
+      operation: req.params.operation,
+    };
+
+    const query = `mutation AddLike($userId: String!, $id: String!, $type: String!, $operation: String!) {
+        addLike(userId: $userId, id: $id, type: $type, operation: $operation)
+      }`;
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp);
+    } else {
+      res.status(400).send(resp.errors);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+}
+
+export async function updateRelationship(req: Request, res: Response) {
+  const date = new Date();
+
+  await client.update({
+    index: "relationship",
+    id: req.params.id,
+    type: "_doc",
+    body: {
+      script: {
+        source: `ctx._source.text = '${req.body.text}'`,
+      },
+    },
+  });
+
+  const variables = {
+    threadId: req.params.id,
+    text: req.body.text,
+  };
+
+  const query = `mutation UpdateThread($threadId: String!, $text: String) {
+        updateThread(threadId: $threadId, text: $text) 
+      }`;
+  const gqlResp = await pingGraphql(query, variables);
+  if (!gqlResp.errors) {
+    res.json(gqlResp.data.updateThread);
+  } else {
+    res.status(400).send(gqlResp.errors);
   }
 }
