@@ -194,7 +194,7 @@ export async function addCommentLike(req: Request, res: Response) {
       id: req.params.commentId,
       body: {
         script: {
-          source: "ctx._source.likes++",
+          source: `${req.params.operation === 'add' ? 'ctx._source.likes++' : 'ctx._source.likes--'}`,
         },
       },
     });

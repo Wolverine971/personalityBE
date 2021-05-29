@@ -259,7 +259,7 @@ export async function addContentLike(req: Request, res: Response) {
       id: req.params.contentId,
       body: {
         script: {
-          source: "ctx._source.likes++",
+          source: `${req.params.operation === 'add' ? 'ctx._source.likes++' : 'ctx._source.likes--'}`,
         },
       },
     });

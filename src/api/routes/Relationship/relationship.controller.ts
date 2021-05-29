@@ -136,7 +136,7 @@ export async function addRelationshipDataLike(req: Request, res: Response) {
       id: req.params.id,
       body: {
         script: {
-          source: "ctx._source.likes++",
+          source: `${req.params.operation === 'add' ? 'ctx._source.likes++' : 'ctx._source.likes--'}`,
         },
       },
     });

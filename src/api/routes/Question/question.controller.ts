@@ -96,6 +96,9 @@ export async function getQuestions(req: Request, res: Response) {
           subscribers
           commenterIds
           dateCreated
+          comments {
+            count
+          }
           author {
             id
             enneagramId
@@ -124,7 +127,7 @@ export async function addQuestionLike(req: Request, res: Response) {
       id: req.params.questionId,
       body: {
         script: {
-          source: "ctx._source.likes++",
+          source: `${req.params.operation === 'add' ? 'ctx._source.likes++' : 'ctx._source.likes--'}`,
         },
       },
     });
@@ -166,6 +169,9 @@ export async function getQuestion(req: Request, res: Response) {
           subscribers
           commenterIds
           dateCreated
+          comments {
+            count
+          }
           modified
           author {
             id
@@ -217,6 +223,9 @@ export async function getJustQuestion(req: Request, res: Response) {
           }
           id
           question
+          comments {
+            count
+          }
           likes
           subscribers
           commenterIds
@@ -243,7 +252,7 @@ export async function addSubscription(req: Request, res: Response) {
       id: req.params.questionId,
       body: {
         script: {
-          source: "ctx._source.subscriptions++",
+          source: `${req.params.operation === 'add' ? 'ctx._source.subscriptions++' : 'ctx._source.subscriptions--'}`
         },
       },
     });
