@@ -20,7 +20,7 @@ router.delete(
 
 router.post("/login", controller.login);
 router.get("/confirm/:confirmationToken", controller.confirmUser);
-router.get("/logout", controller.isAuth, controller.logout);
+router.post("/logout", controller.logout);
 router.post("/register", controller.register);
 router.post("/forgotPassword", controller.forgotPassword);
 router.get("/refresh_token/:token", controller.doRefreshToken);
