@@ -25,7 +25,7 @@ router.get(
   isAuth,
   questionsController.addSubscription
 );
-router.post("/sort/:questionId", isAuth, questionsController.getComments);
+router.post("/sort/:questionId?", isAuth, questionsController.getComments);
 
 router.put("/notifications", isAuth, questionsController.clearNotifications);
 

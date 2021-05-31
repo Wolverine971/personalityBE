@@ -1,9 +1,7 @@
 import { Request, Response } from "express";
-
 import { pingGraphql } from "../../../helpers/pingGraphql";
-// tslint:disable-next-line: no-var-requires
 import { client } from "../../elasticsearch";
-
+// tslint:disable: no-string-literal
 export async function getComment(req: Request, res: Response) {
   try {
     const variables = {
@@ -58,11 +56,9 @@ export async function addComment(req: Request, res: Response) {
   return client
     .index({
       index: "comment",
-      // id: '1',
       type: "_doc",
       body: {
         parentId: req.params.id,
-        // tslint:disable-next-line: no-string-literal
         authorId: req["payload"].userId,
         comment: req.body.comment,
         comments: 0,
@@ -121,7 +117,6 @@ export async function addComment(req: Request, res: Response) {
       const variables = {
         id: resp._id,
         parentId: req.params.id,
-        // tslint:disable-next-line: no-string-literal
         authorId: req["payload"].userId,
         comment: req.body.comment,
         type: req.params.index,
@@ -199,7 +194,6 @@ export async function addCommentLike(req: Request, res: Response) {
       },
     });
     const variables = {
-      // tslint:disable-next-line: no-string-literal
       userId: req["payload"].userId,
       id: req.params.commentId,
       type: "comment",

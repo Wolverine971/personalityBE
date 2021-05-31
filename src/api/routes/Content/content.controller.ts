@@ -1,22 +1,18 @@
 import { Request, Response } from "express";
-
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { client } from "../../elasticsearch";
-
+// tslint:disable: no-string-literal
+// tslint:disable: no-var-requires
 const formidable = require("formidable");
 const fs = require("fs");
-
 const imagemin = require("imagemin");
 const mozjpeg = require("imagemin-mozjpeg");
 const isJpg = require("is-jpg");
-// tslint:disable-next-line: no-var-requires
 const sharp = require("sharp");
 import { v4 as uuidv4 } from "uuid";
 import { s3 } from "../../..";
-
 export async function addContent(req: Request, res: Response) {
   try {
-    // tslint:disable-next-line: no-string-literal
     if (req["file"] || req["files"]) {
       console.log("contains file");
     } else {
@@ -33,7 +29,6 @@ export async function addContent(req: Request, res: Response) {
           index: req.params.type,
           type: "_doc",
           body: {
-            // tslint:disable-next-line: no-string-literal
             authorId: req["payload"].userId,
             text: fields.text,
             comments: 0,
@@ -50,7 +45,6 @@ export async function addContent(req: Request, res: Response) {
       }
       const variables = {
         id: id ? id : null,
-        // tslint:disable-next-line: no-string-literal
         userId: req["payload"].userId,
         enneagramType: req.params.type,
         text: fields.text,
@@ -264,7 +258,6 @@ export async function addContentLike(req: Request, res: Response) {
       },
     });
     const variables = {
-      // tslint:disable-next-line: no-string-literal
       userId: req["payload"].userId,
       id: req.params.contentId,
       type: "content",

@@ -1,15 +1,17 @@
-// tslint:disable-next-line: no-var-requires
+// tslint:disable: no-var-requires
+// tslint:disable: no-string-literal
 const bcrypt = require("bcrypt");
 import { Request, Response } from "express";
+import { client } from "../../elasticsearch";
+
 import { verify } from "jsonwebtoken";
 import { createAccessToken, createRefreshToken } from "../../../config/auth";
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { confirmation, forgotPass } from "./email";
 const fetch = require("node-fetch");
 const saltRounds = 10;
-
 import { notificationsSetup } from "../Notifications/notifications";
-export async function getAll(req: Request, res: Response): Promise<any> {
+export async function getAll(req: Request, res: Response) {
   try {
     const query = `query Users() {
       users(){
@@ -31,9 +33,43 @@ export async function getAll(req: Request, res: Response): Promise<any> {
   }
 }
 
+export async function getPaginatedUsers(req: Request, res: Response) {
+  try {
+    const variables = {
+      cursorId: req.params.cursorId,
+      id: req["payload"].userId
+    };
+
+    const query = `query Users($cursorId: String, $id: String!) {
+      users(cursorId: $cursorId, id: $id){
+        users{
+          id
+          firstName
+          lastName
+          email
+          enneagramId
+          mbtiId
+          confirmedUser
+          role
+          dateCreated
+          dateModified
+        }
+        count
+      }
+    }`;
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp.data.users);
+    } else {
+      res.status(400).send(resp.errors);
+    }
+  } catch (error) {
+    res.status(400).send(error);
+  }
+}
+
 export async function getUserById(req: Request, res: Response) {
   const variables = {
-    // tslint:disable-next-line: no-string-literal
     id: req["payload"].userId,
   };
 
@@ -58,7 +94,6 @@ export async function getUserById(req: Request, res: Response) {
 export async function addOne(req: Request, res: Response) {
   try {
     const variables = {
-      // tslint:disable-next-line: no-string-literal
       firstName: req.body.FirstName,
       lastName: req.body.LastName,
       email: req.body.Email,
@@ -83,7 +118,6 @@ export async function addOne(req: Request, res: Response) {
 export async function updateOne(req: Request, res: Response) {
   try {
     const variables = {
-      // tslint:disable-next-line: no-string-literal
       id: req["payload"].userId,
       firstName: req.body.firstName,
       lastName: req.body.lastName,
@@ -152,6 +186,7 @@ export async function login(req: Request, res: Response) {
         mbtiId
         tokenVersion
         confirmedUser
+        role
       }
     }`;
     let user = null;
@@ -345,6 +380,7 @@ export const doRefreshToken = async (req: Request, res: Response, next) => {
           enneagramId
           mbtiId
           tokenVersion
+          role
         }
       }`;
     let user = null;
@@ -404,7 +440,6 @@ export const isAuth = (req: Request, res: Response, next) => {
       // const token = authorization.split(" ")[1];
       const token = authorization;
       const payload = verify(token, process.env.ACCESS_TOKEN);
-      // tslint:disable-next-line: no-string-literal
       req["payload"] = payload;
       return next();
     } catch (error) {
@@ -430,7 +465,6 @@ export const enter = async (req: Request, res: Response) => {
 export const reset = async (req: Request, res: Response) => {
   try {
     const variables = {
-      // tslint:disable-next-line: no-string-literal
       resetPasswordToken: req.params.token,
     };
 
@@ -447,6 +481,37 @@ export const reset = async (req: Request, res: Response) => {
     }
   } catch (error) {
     res.status(400).send(error);
+  }
+};
+
+export const change = async (req: Request, res: Response) => {
+  const type = req.body.type;
+  const tag = req.body.tag;
+  try {
+    if (type !== "user") {
+      const esResp = await client.delete({
+        id: tag,
+        index: type,
+        type: "_doc",
+      });
+      console.log(esResp);
+    }
+    const variables = {
+      id: req["payload"].userId,
+      type,
+      tag,
+    };
+    const query = `mutation Change($id: String!, $type: String!, $tag: String!) {
+        change(id: $id, type: $type, tag: $tag)
+      }`;
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp.data.change);
+    } else {
+      res.status(400).send(resp.errors);
+    }
+  } catch (error) {
+    res.status(500).send(error);
   }
 };
 
@@ -477,7 +542,7 @@ export const resetPassword = async (req: Request, res: Response) => {
         res.send("Your password has been updated.");
       }
     } else {
-      res.status(500).send('failure');
+      res.status(500).send("failure");
     }
   } catch (error) {
     res.status(500).send(error);
@@ -485,7 +550,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 };
 
 export const sendAllUsers = async (req: Request, res: Response) => {
-  if(req.params.password === process.env.EmailPassword){
+  if (req.params.password === process.env.EmailPassword) {
     const query = `query Users {
       users {
         email
@@ -504,18 +569,15 @@ export const sendAllUsers = async (req: Request, res: Response) => {
       if (sent) {
         res.send("Email Sent");
       } else {
-        res.status(500).send('failure');
+        res.status(500).send("failure");
       }
     } else {
-      res.status(500).send('failure');
+      res.status(500).send("failure");
     }
-
   } else {
-    res.status(500).send("error")
-
+    res.status(500).send("error");
   }
-
-}
+};
 
 const sendConfirmation = async (confirmationToken, email, res) => {
   try {

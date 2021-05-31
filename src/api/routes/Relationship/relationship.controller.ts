@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
-
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { client } from "../../elasticsearch";
-
+// tslint:disable: no-string-literal
 export async function getRelationship(req: Request, res: Response) {
   try {
     const variables = {
@@ -66,7 +65,6 @@ export async function createRelationshipData(req: Request, res: Response) {
         // id: '1',
         type: "_doc",
         body: {
-          // tslint:disable-next-line: no-string-literal
           authorId: req["payload"].userId,
           text: req.body.text,
           comments: 0,
@@ -78,7 +76,6 @@ export async function createRelationshipData(req: Request, res: Response) {
         console.log(resp);
         const variables = {
           id: resp._id,
-          // tslint:disable-next-line: no-string-literal
           userId: req["payload"].userId,
           relationship: [req.params.id1, req.params.id2],
           text: req.body.text
@@ -142,7 +139,6 @@ export async function addRelationshipDataLike(req: Request, res: Response) {
     });
 
     const variables = {
-      // tslint:disable-next-line: no-string-literal
       userId: req["payload"].userId,
       id: req.params.id,
       type: "relationship",

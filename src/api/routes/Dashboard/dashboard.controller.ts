@@ -1,10 +1,7 @@
 import { Request, Response } from "express";
-
 import { pingGraphql } from "../../../helpers/pingGraphql";
-// tslint:disable-next-line: no-var-requires
 import { client } from "../../elasticsearch";
-import { typeaheadQuery } from "../../ESRequests";
-
+// tslint:disable: no-string-literal
 export async function getDashboard(req: Request, res: Response) {
   try {
     const newQuestions = await client.search({
@@ -29,7 +26,6 @@ export async function getDashboard(req: Request, res: Response) {
             must: [
               {
                 match: {
-                  // tslint:disable-next-line: no-string-literal
                   authorId: req["payload"].userId,
                 },
               },
@@ -69,7 +65,6 @@ export async function getDashboard(req: Request, res: Response) {
         }
     }`;
     const variables = {
-      // tslint:disable-next-line: no-string-literal
       userId: req["payload"].userId,
     };
 

@@ -1,12 +1,10 @@
 import { Router } from "express";
 
 import * as controller from "./auth.controller";
-import { confirmation } from "./email";
 
 const router: Router = Router();
-const fetch = require("node-fetch");
-const { google } = require("googleapis");
 router.get("/getAll", controller.isAuth, controller.getAll);
+router.get("/all/:cursorId?", controller.isAuth, controller.getPaginatedUsers);
 
 router.get("/getUserById", controller.isAuth, controller.getUserById);
 router.post("/addOne", controller.isAuth, controller.addOne);
@@ -33,5 +31,6 @@ router.get("/reset/:token", controller.reset);
 router.post("/resetPassword/:token", controller.resetPassword);
 
 router.get("/sendEmail/:password", controller.sendAllUsers);
+router.post("/change", controller.isAuth, controller.change);
 
 export default router;

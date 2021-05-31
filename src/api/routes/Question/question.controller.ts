@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
-
 import { redis } from "../../..";
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { client } from "../../elasticsearch";
 import { typeaheadQuery } from "../../ESRequests";
-import { IQuestionHit } from "../../models/singleDoc";
-
+// tslint:disable: no-string-literal
 export async function getTypeAhead(req: Request, res: Response) {
   const question = req.params.question;
   return client
@@ -27,7 +25,6 @@ export async function addQuestion(req: Request, res: Response) {
       type: "_doc",
       body: {
         question: req.params.question,
-        // tslint:disable-next-line: no-string-literal
         authorId: req["payload"].userId,
         authorType: req.params.type,
         comments: 0,
@@ -41,7 +38,6 @@ export async function addQuestion(req: Request, res: Response) {
       const variables = {
         id: resp._id,
         question: req.params.question,
-        // tslint:disable-next-line: no-string-literal
         authorId: req["payload"].userId,
       };
 
@@ -97,6 +93,9 @@ export async function getQuestions(req: Request, res: Response) {
           commenterIds
           dateCreated
           comments {
+            comments {
+              id
+            }
             count
           }
           author {
@@ -127,13 +126,16 @@ export async function addQuestionLike(req: Request, res: Response) {
       id: req.params.questionId,
       body: {
         script: {
-          source: `${req.params.operation === 'add' ? 'ctx._source.likes++' : 'ctx._source.likes--'}`,
+          source: `${
+            req.params.operation === "add"
+              ? "ctx._source.likes++"
+              : "ctx._source.likes--"
+          }`,
         },
       },
     });
 
     const variables = {
-      // tslint:disable-next-line: no-string-literal
       userId: req["payload"].userId,
       id: req.params.questionId,
       type: "question",
@@ -170,6 +172,9 @@ export async function getQuestion(req: Request, res: Response) {
           commenterIds
           dateCreated
           comments {
+            comments {
+              id
+            }
             count
           }
           modified
@@ -224,6 +229,9 @@ export async function getJustQuestion(req: Request, res: Response) {
           id
           question
           comments {
+            comments {
+              id
+            }
             count
           }
           likes
@@ -252,14 +260,17 @@ export async function addSubscription(req: Request, res: Response) {
       id: req.params.questionId,
       body: {
         script: {
-          source: `${req.params.operation === 'add' ? 'ctx._source.subscriptions++' : 'ctx._source.subscriptions--'}`
+          source: `${
+            req.params.operation === "add"
+              ? "ctx._source.subscriptions++"
+              : "ctx._source.subscriptions--"
+          }`,
         },
       },
     });
 
     const variables = {
       questionId: req.params.questionId,
-      // tslint:disable-next-line: no-string-literal
       userId: req["payload"].userId,
       operation: req.params.operation,
     };
@@ -288,7 +299,7 @@ export async function getComments(req: Request, res: Response) {
       sortBy: req.body.sortBy,
     };
 
-    const query = `query GetSortedComments($questionId: String!, $enneagramTypes: [String], $dateRange: String, $sortBy: String) {
+    const query = `query GetSortedComments($questionId: String, $enneagramTypes: [String], $dateRange: String, $sortBy: String) {
         getSortedComments(questionId: $questionId, enneagramTypes: $enneagramTypes, dateRange: $dateRange, sortBy: $sortBy) {
           comments {
             id
@@ -338,7 +349,6 @@ export async function getComments(req: Request, res: Response) {
 export async function clearNotifications(req: Request, res: Response) {
   try {
     const redisClient = redis.createClient();
-    // tslint:disable-next-line: no-string-literal
     redisClient.set(`push:notifications:${req["payload"].userId}`, "");
     res.status(200).send("ok");
   } catch (error) {
@@ -347,12 +357,11 @@ export async function clearNotifications(req: Request, res: Response) {
   }
 }
 
-
 export async function updateQuestion(req: Request, res: Response) {
   try {
     const variables = {
       questionId: req.params.questionId,
-      question: req.body.question
+      question: req.body.question,
     };
 
     const query = `mutation UpdateQuestion($questionId: String!, $question: String) {
