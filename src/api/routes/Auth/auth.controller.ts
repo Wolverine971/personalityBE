@@ -228,7 +228,7 @@ export async function login(req: Request, res: Response) {
 export async function logout(req: Request, res: Response) {
   try {
     console.log("logout");
-    res.status(400);
+    res.status(200).send("ok");
   } catch (error) {
     res.status(400).send(error);
   }
