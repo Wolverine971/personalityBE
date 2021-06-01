@@ -69,6 +69,7 @@ export async function getPaginatedUsers(req: Request, res: Response) {
 }
 
 export async function getUserById(req: Request, res: Response) {
+  console.log('getuserbyid')
   const variables = {
     id: req["payload"].userId,
   };
@@ -357,7 +358,9 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
 };
 
 export const doRefreshToken = async (req: Request, res: Response, next) => {
+  console.log('doRefreshToken')
   const token = req.params.token;
+  console.log(token)
   if (!token) {
     return res.send({ ok: false, accessToken: "" });
   }
@@ -387,6 +390,7 @@ export const doRefreshToken = async (req: Request, res: Response, next) => {
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
       user = resp.data.getUserById;
+      console.log(user)
     } else {
       return res.status(400).send(resp.errors);
     }
@@ -463,6 +467,7 @@ export const enter = async (req: Request, res: Response) => {
 };
 
 export const reset = async (req: Request, res: Response) => {
+  console.log('reset')
   try {
     const variables = {
       resetPasswordToken: req.params.token,
