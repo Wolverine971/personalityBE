@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import Auth from "./routes/Auth/auth.route";
+import blog from "./routes/Blog/blog.route";
 import comment from "./routes/Comment/comment.route";
 import content from "./routes/Content/content.route";
 import dashboard from "./routes/Dashboard/dashboard.route";
@@ -15,6 +16,7 @@ router.use("/comment", comment);
 router.use("/content", content);
 router.use("/dashboard", dashboard);
 router.use("/relationship", relationship);
+router.use("/blog", blog);
 
 router.get("/", (req, res) => {
   res.send("<h1>yup</h1>");

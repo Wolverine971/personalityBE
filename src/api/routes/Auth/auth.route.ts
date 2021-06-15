@@ -17,6 +17,7 @@ router.delete(
 );
 
 router.post("/login", controller.login);
+// router.get("/user", controller.isAuth, controller.getUser)
 router.get("/confirm/:confirmationToken", controller.confirmUser);
 router.post("/logout", controller.logout);
 router.post("/register", controller.register);
