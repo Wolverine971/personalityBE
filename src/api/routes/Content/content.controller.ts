@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
+
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { client } from "../../elasticsearch";
+
 // tslint:disable: no-string-literal
 // tslint:disable: no-var-requires
 const formidable = require("formidable");
@@ -54,7 +56,9 @@ export async function addContent(req: Request, res: Response) {
       const query = `mutation CreateContent($id: String, $userId: String!, $enneagramType: String!, $text: String, $img: String) {
         createContent(id: $id, userId: $userId, enneagramType: $enneagramType, text: $text, img: $img) {
             id
-            userId
+            author {
+              id
+            }
             text
             img
             likes
@@ -106,7 +110,9 @@ export async function getContent(req: Request, res: Response) {
         getContent(enneagramType: $enneagramType, type: $type, pageSize: $pageSize, lastDate: $lastDate) {
           content {
             id
-            userId
+            author {
+              id
+            }
             text
             img
             likes

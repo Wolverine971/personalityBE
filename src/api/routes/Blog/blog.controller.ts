@@ -10,12 +10,12 @@ export async function createBlog(req: Request, res: Response) {
       title: req.body.title,
       description: req.body.description,
       body: req.body.body,
-      author: req.body.author,
+      authorId: req["payload"].userId,
       img: req.body.img,
     };
 
-    const query = `mutation CreateBlog($title: String!, $img: String, $description: String!, $body: String!, $author: String! ) {
-        createBlog(title: $title, img: $img, description: $description, body: $body, author: $author) {
+    const query = `mutation CreateBlog($title: String!, $img: String, $description: String!, $body: String!, $authorId: String! ) {
+        createBlog(title: $title, img: $img, description: $description, body: $body, authorId: $authorId) {
             id
           }
         }`;
@@ -38,12 +38,12 @@ export async function updateBlog(req: Request, res: Response) {
       title: req.body.title,
       description: req.body.description,
       body: req.body.body,
-      author: req.body.author,
+      authorId: req["payload"].userId,
       img: req.body.img,
     };
 
-    const query = `mutation UpdateBlog($title: String!, $img: String, $description: String!, $body: String!, $author: String! ) {
-          updateBlog(title: $title, img: $img, description: $description, body: $body, author: $author) {
+    const query = `mutation UpdateBlog($title: String!, $img: String, $description: String!, $body: String!, $authorId: String! ) {
+          updateBlog(title: $title, img: $img, description: $description, body: $body, authorId: $authorId) {
               id
             }
           }`;
@@ -91,15 +91,18 @@ export async function getBlogs(req: Request, res: Response) {
         getBlogs(lastDate: $lastDate){
             blog {
                 id
+                author {
+                    id
+                    firstName
+                    lastName
+                    enneagramId
+                }
                 title
                 description
-                body
+                preview
                 img
                 likes
                 comments{
-                    comments{
-                        id
-                    }
                     count
                 }
                 dateCreated
@@ -113,6 +116,52 @@ export async function getBlogs(req: Request, res: Response) {
       const resp = await pingGraphql(query, variables);
       if (!resp.errors) {
         res.json(resp.data.getBlogs);
+      } else {
+        res.status(400).send(resp.errors);
+      }
+    } catch (error) {
+      console.log(error);
+      res.status(400).send(error.message);
+    }
+  }
+
+
+  export async function getBlog(req: Request, res: Response) {
+    try {
+      const variables = {
+        title: req.params.title,
+      };
+  
+      const query = `query GetBlog($title: String!) {
+        getBlog(title: $title){
+            id
+            author {
+                id
+                firstName
+                lastName
+                enneagramId
+            }
+            title
+            description
+            body
+            img
+            likes
+            comments{
+                comments{
+                    id
+                }
+                count
+            }
+            dateCreated
+            dateModified
+
+            
+
+        }
+            }`;
+      const resp = await pingGraphql(query, variables);
+      if (!resp.errors) {
+        res.json(resp.data.getBlog);
       } else {
         res.status(400).send(resp.errors);
       }
