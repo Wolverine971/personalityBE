@@ -15,45 +15,32 @@ import { v4 as uuidv4 } from "uuid";
 import { s3 } from "../../..";
 export async function addContent(req: Request, res: Response) {
   try {
-    if (req["file"] || req["files"]) {
-      console.log("contains file");
-    } else {
-      console.log("no file");
-    }
+    const fields = await parseForm(req);
     let id = null;
-    const form = new formidable.IncomingForm();
-    form.parse(req, async (err, fields, files) => {
-      if (err) {
-        return res.status(400).json({ error: err.message });
-      }
-      if (fields.text) {
-        const esResp = await client.index({
-          index: req.params.type,
-          type: "_doc",
-          body: {
-            authorId: req["payload"].userId,
-            text: fields.text,
-            comments: 0,
-            likes: 0,
-            createdDate: new Date()
-          },
-        });
-        id = esResp._id;
-      }
 
-      let imgKey = "";
-      if (files.img) {
-        imgKey = await getImage(files.img);
-      }
-      const variables = {
-        id: id ? id : null,
-        userId: req["payload"].userId,
-        enneagramType: req.params.type,
-        text: fields.text,
-        img: imgKey,
-      };
+    if (fields.text) {
+      const esResp = await client.index({
+        index: req.params.type,
+        type: "_doc",
+        body: {
+          authorId: req["payload"].userId,
+          text: fields.text,
+          comments: 0,
+          likes: 0,
+          createdDate: new Date(),
+        },
+      });
+      id = esResp._id;
+    }
+    const variables = {
+      id: id ? id : null,
+      userId: req["payload"].userId,
+      enneagramType: req.params.type,
+      text: fields.text,
+      img: fields.img,
+    };
 
-      const query = `mutation CreateContent($id: String, $userId: String!, $enneagramType: String!, $text: String, $img: String) {
+    const query = `mutation CreateContent($id: String, $userId: String!, $enneagramType: String!, $text: String, $img: String) {
         createContent(id: $id, userId: $userId, enneagramType: $enneagramType, text: $text, img: $img) {
             id
             author {
@@ -84,13 +71,12 @@ export async function addContent(req: Request, res: Response) {
             }
         }
       }`;
-      const resp = await pingGraphql(query, variables);
-      if (!resp.errors) {
-        res.json(resp.data.createContent);
-      } else {
-        res.status(400).send(resp.errors);
-      }
-    });
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp.data.createContent);
+    } else {
+      res.status(400).send(resp.errors);
+    }
   } catch (error) {
     console.log(error);
     res.status(400).send(error.message);
@@ -156,7 +142,7 @@ export async function loadMore(req: Request, res: Response) {
   try {
     const variables = {
       lastDate: req.params.lastDate ? req.params.lastDate : "",
-      parentId: req.params.parentId ? req.params.parentId : ""
+      parentId: req.params.parentId ? req.params.parentId : "",
     };
 
     const query = `query GetMoreComments($parentId: String!, $lastDate: String!) {
@@ -190,6 +176,38 @@ export async function loadMore(req: Request, res: Response) {
   } catch (error) {
     console.log(error);
     res.status(400).send(error.message);
+  }
+}
+
+export async function parseForm(req): Promise<any> {
+  try {
+    if (req["file"] || req["files"]) {
+      console.log("contains file");
+    } else {
+      console.log("no file");
+    }
+    const form = new formidable.IncomingForm();
+    return await new Promise((resolve, reject) => {
+      return form.parse(req, async (err, fields, files) => {
+        if (err) {
+          return new Error("Error parsing form");
+        }
+        const obj = {};
+        Object.keys(fields).forEach((key) => {
+          obj[key] = fields[key];
+        });
+
+        let imgKey = "";
+        if (files.img) {
+          imgKey = await getImage(files.img);
+          obj["img"] = imgKey;
+        }
+        resolve(obj);
+      });
+    });
+  } catch (error) {
+    console.log(error);
+    return null;
   }
 }
 
@@ -259,7 +277,11 @@ export async function addContentLike(req: Request, res: Response) {
       id: req.params.contentId,
       body: {
         script: {
-          source: `${req.params.operation === 'add' ? 'ctx._source.likes++' : 'ctx._source.likes--'}`,
+          source: `${
+            req.params.operation === "add"
+              ? "ctx._source.likes++"
+              : "ctx._source.likes--"
+          }`,
         },
       },
     });

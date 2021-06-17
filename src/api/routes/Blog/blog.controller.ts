@@ -2,20 +2,40 @@ import { Request, Response } from "express";
 
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { client } from "../../elasticsearch";
+import { parseForm } from "../Content/content.controller";
 
 // tslint:disable: no-string-literal
 export async function createBlog(req: Request, res: Response) {
   try {
+    const fields = await parseForm(req);
+    let id = null;
+
+    if (fields.text) {
+      const esResp = await client.index({
+        index: 'blog',
+        type: "_doc",
+        body: {
+          authorId: req["payload"].userId,
+          text: fields.text,
+          comments: 0,
+          likes: 0,
+          createdDate: new Date(),
+        },
+      });
+      id = esResp._id;
+    }
+
     const variables = {
-      title: req.body.title,
-      description: req.body.description,
-      body: req.body.body,
+      title: fields.title,
+      description: fields.description,
+      body: fields.body,
       authorId: req["payload"].userId,
-      img: req.body.img,
+      size: parseInt(fields.size, 10),
+      img: fields.img,
     };
 
-    const query = `mutation CreateBlog($title: String!, $img: String, $description: String!, $body: String!, $authorId: String! ) {
-        createBlog(title: $title, img: $img, description: $description, body: $body, authorId: $authorId) {
+    const query = `mutation CreateBlog($title: String!, $img: String, $description: String!, $body: String!, $authorId: String!, $size: Int ) {
+        createBlog(title: $title, img: $img, description: $description, body: $body, authorId: $authorId, size: $size) {
             id
           }
         }`;
@@ -39,11 +59,12 @@ export async function updateBlog(req: Request, res: Response) {
       description: req.body.description,
       body: req.body.body,
       authorId: req["payload"].userId,
+      size: req.body.size,
       img: req.body.img,
     };
 
-    const query = `mutation UpdateBlog($title: String!, $img: String, $description: String!, $body: String!, $authorId: String! ) {
-          updateBlog(title: $title, img: $img, description: $description, body: $body, authorId: $authorId) {
+    const query = `mutation UpdateBlog($title: String!, $img: String, $description: String!, $body: String!, $authorId: String!, $size: Int ) {
+          updateBlog(title: $title, img: $img, description: $description, body: $body, authorId: $authorId, size: $size) {
               id
             }
           }`;
@@ -80,14 +101,13 @@ export async function deleteBlog(req: Request, res: Response) {
   }
 }
 
-
 export async function getBlogs(req: Request, res: Response) {
-    try {
-      const variables = {
-        lastDate: req.params.lastDate ? req.params.lastDate : "",
-      };
-  
-      const query = `query GetBlogs($lastDate: String! ) {
+  try {
+    const variables = {
+      lastDate: req.params.lastDate ? req.params.lastDate : "",
+    };
+
+    const query = `query GetBlogs($lastDate: String! ) {
         getBlogs(lastDate: $lastDate){
             blog {
                 id
@@ -101,6 +121,7 @@ export async function getBlogs(req: Request, res: Response) {
                 description
                 preview
                 img
+                size
                 likes
                 comments{
                     count
@@ -113,26 +134,25 @@ export async function getBlogs(req: Request, res: Response) {
 
         }
             }`;
-      const resp = await pingGraphql(query, variables);
-      if (!resp.errors) {
-        res.json(resp.data.getBlogs);
-      } else {
-        res.status(400).send(resp.errors);
-      }
-    } catch (error) {
-      console.log(error);
-      res.status(400).send(error.message);
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp.data.getBlogs);
+    } else {
+      res.status(400).send(resp.errors);
     }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
   }
+}
 
+export async function getBlog(req: Request, res: Response) {
+  try {
+    const variables = {
+      title: req.params.title,
+    };
 
-  export async function getBlog(req: Request, res: Response) {
-    try {
-      const variables = {
-        title: req.params.title,
-      };
-  
-      const query = `query GetBlog($title: String!) {
+    const query = `query GetBlog($title: String!) {
         getBlog(title: $title){
             id
             author {
@@ -145,6 +165,7 @@ export async function getBlogs(req: Request, res: Response) {
             description
             body
             img
+            size
             likes
             comments{
                 comments{
@@ -159,14 +180,14 @@ export async function getBlogs(req: Request, res: Response) {
 
         }
             }`;
-      const resp = await pingGraphql(query, variables);
-      if (!resp.errors) {
-        res.json(resp.data.getBlog);
-      } else {
-        res.status(400).send(resp.errors);
-      }
-    } catch (error) {
-      console.log(error);
-      res.status(400).send(error.message);
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp.data.getBlog);
+    } else {
+      res.status(400).send(resp.errors);
     }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
   }
+}
