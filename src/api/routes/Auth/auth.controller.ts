@@ -346,10 +346,10 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
           res.status(500).send("Failed to send Forgot Password Link");
         }
       } else {
-        res.status(500).send("Failed to generate reset token");
+        res.status(404).send("Invalid Email");
       }
     } else {
-      res.status(500).send("Failed to get User");
+      res.status(404).send("Invalid Email");
     }
   } catch (error) {
     res.status(500).send(error);
