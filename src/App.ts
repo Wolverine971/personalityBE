@@ -9,6 +9,7 @@ import * as errorHandler from "./helpers/errorHandler"
 
 const corsOptions = {
   origin: [
+    '*',
     process.env.ORIGIN,
     "https://9takes.com/",
     "https://9takes.com:3001",

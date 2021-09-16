@@ -9,8 +9,8 @@ router.post("/create", isAuth, blogController.createBlog);
 router.post("/update/:id", isAuth, blogController.updateBlog);
 router.delete("/delete/:id", isAuth, blogController.deleteBlog);
 
-router.get("/get/:lastDate?", isAuth, blogController.getBlogs);
-router.get("/getOne/:title", isAuth, blogController.getBlog);
+router.get("/get/:lastDate?", blogController.getBlogs);
+router.get("/getOne/:title", blogController.getBlog);
 
 
 export default router;
