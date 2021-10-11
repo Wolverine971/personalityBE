@@ -53,18 +53,31 @@ export async function createBlog(req: Request, res: Response) {
 
 export async function updateBlog(req: Request, res: Response) {
   try {
+    const fields = await parseForm(req);
     const variables = {
       id: req.params.id,
-      title: req.body.title,
-      description: req.body.description,
-      body: req.body.body,
+      title: fields.title,
+      description: fields.description,
+      body: fields.body,
       authorId: req["payload"].userId,
-      size: req.body.size,
-      img: req.body.img,
+      size: parseInt(fields.size, 10),
+      img: fields.img,
     };
 
-    const query = `mutation UpdateBlog($title: String!, $img: String, $description: String!, $body: String!, $authorId: String!, $size: Int ) {
-          updateBlog(title: $title, img: $img, description: $description, body: $body, authorId: $authorId, size: $size) {
+    const query = `mutation UpdateBlog($id: String!, 
+                  $title: String, 
+                  $img: String, 
+                  $description: String, 
+                  $body: String, 
+                  $authorId: String!, 
+                  $size: Int ) {
+          updateBlog(id: $id, 
+            title: $title, 
+            img: $img, 
+            description: $description, 
+            body: $body, 
+            authorId: $authorId, 
+            size: $size) {
               id
             }
           }`;
@@ -119,7 +132,6 @@ export async function getBlogs(req: Request, res: Response) {
                 }
                 title
                 description
-                preview
                 img
                 size
                 likes
