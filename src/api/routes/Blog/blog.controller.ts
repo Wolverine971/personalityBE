@@ -10,22 +10,21 @@ export async function createBlog(req: Request, res: Response) {
     const fields = await parseForm(req);
     let id = null;
 
-    if (fields.text) {
-      const esResp = await client.index({
-        index: 'blog',
-        type: "_doc",
-        body: {
-          authorId: req["payload"].userId,
-          text: fields.text,
-          comments: 0,
-          likes: 0,
-          createdDate: new Date(),
-        },
-      });
-      id = esResp._id;
-    }
+    const esResp = await client.index({
+      index: "blog",
+      type: "_doc",
+      body: {
+        authorId: req["payload"].userId,
+        text: fields.body,
+        comments: 0,
+        likes: 0,
+        createdDate: new Date(),
+      },
+    });
+    id = esResp._id;
 
     const variables = {
+      id,
       title: fields.title,
       description: fields.description,
       body: fields.body,
@@ -34,8 +33,8 @@ export async function createBlog(req: Request, res: Response) {
       img: fields.img,
     };
 
-    const query = `mutation CreateBlog($title: String!, $img: String, $description: String!, $body: String!, $authorId: String!, $size: Int ) {
-        createBlog(title: $title, img: $img, description: $description, body: $body, authorId: $authorId, size: $size) {
+    const query = `mutation CreateBlog($id: String!, $title: String!, $img: String, $description: String!, $body: String!, $authorId: String!, $size: Int ) {
+        createBlog(id: $id, title: $title, img: $img, description: $description, body: $body, authorId: $authorId, size: $size) {
             id
           }
         }`;
@@ -140,7 +139,6 @@ export async function getBlogs(req: Request, res: Response) {
                 }
                 dateCreated
                 dateModified
-
             }
             count
 
@@ -187,9 +185,6 @@ export async function getBlog(req: Request, res: Response) {
             }
             dateCreated
             dateModified
-
-            
-
         }
             }`;
     const resp = await pingGraphql(query, variables);

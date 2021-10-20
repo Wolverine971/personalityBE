@@ -594,9 +594,8 @@ const sendConfirmation = async (confirmationToken, email, res) => {
       "Confirm Email Address",
       confirmation(link)
     );
-    console.log(sent);
     if (sent) {
-      return res.send("Confirmation email sent: " + sent.response);
+      return res.send("Confirmation email sent: " + email);
     } else {
       res.status(500).send("Failed to Generate Confirmation Email");
     }

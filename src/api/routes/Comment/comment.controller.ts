@@ -89,10 +89,20 @@ export async function addComment(req: Request, res: Response) {
             },
           },
         });
-      }
-      else if (req.params.index === "relationship") {
+      } else if (req.params.index === "relationship") {
         await client.update({
           index: "relationship",
+          id: req.params.id,
+          type: "_doc",
+          body: {
+            script: {
+              source: "ctx._source.comments++",
+            },
+          },
+        });
+      } else if (req.params.index === "blog") {
+        await client.update({
+          index: "blog",
           id: req.params.id,
           type: "_doc",
           body: {

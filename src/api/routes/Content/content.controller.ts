@@ -18,20 +18,18 @@ export async function addContent(req: Request, res: Response) {
     const fields = await parseForm(req);
     let id = null;
 
-    if (fields.text) {
-      const esResp = await client.index({
-        index: req.params.type,
-        type: "_doc",
-        body: {
-          authorId: req["payload"].userId,
-          text: fields.text,
-          comments: 0,
-          likes: 0,
-          createdDate: new Date(),
-        },
-      });
-      id = esResp._id;
-    }
+    const esResp = await client.index({
+      index: req.params.type,
+      type: "_doc",
+      body: {
+        authorId: req["payload"].userId,
+        text: fields.text,
+        comments: 0,
+        likes: 0,
+        createdDate: new Date(),
+      },
+    });
+    id = esResp._id;
     const variables = {
       id: id ? id : null,
       userId: req["payload"].userId,
