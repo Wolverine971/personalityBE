@@ -31,10 +31,25 @@ export async function createBlog(req: Request, res: Response) {
       authorId: req["payload"].userId,
       size: parseInt(fields.size, 10),
       img: fields.img,
+      imgText: fields.imgText
     };
 
-    const query = `mutation CreateBlog($id: String!, $title: String!, $img: String, $description: String!, $body: String!, $authorId: String!, $size: Int ) {
-        createBlog(id: $id, title: $title, img: $img, description: $description, body: $body, authorId: $authorId, size: $size) {
+    const query = `mutation CreateBlog($id: String!, 
+              $title: String!, 
+              $img: String,
+              $imgText: String,
+              $description: String!, 
+              $body: String!, 
+              $authorId: String!, 
+              $size: Int ) {
+                createBlog(id: $id, 
+                  title: $title,
+                  img: $img,
+                  imgText: $imgText, 
+                  description: $description, 
+                  body: $body, 
+                  authorId: $authorId, 
+                  size: $size) {
             id
           }
         }`;
@@ -61,18 +76,21 @@ export async function updateBlog(req: Request, res: Response) {
       authorId: req["payload"].userId,
       size: parseInt(fields.size, 10),
       img: fields.img,
+      imgText: fields.imgText
     };
 
     const query = `mutation UpdateBlog($id: String!, 
                   $title: String, 
-                  $img: String, 
+                  $img: String,
+                  $imgText: String,
                   $description: String, 
                   $body: String, 
                   $authorId: String!, 
                   $size: Int ) {
           updateBlog(id: $id, 
             title: $title, 
-            img: $img, 
+            img: $img,
+            imgText: $imgText, 
             description: $description, 
             body: $body, 
             authorId: $authorId, 
@@ -83,6 +101,44 @@ export async function updateBlog(req: Request, res: Response) {
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
       res.json(resp.data.updateBlog);
+    } else {
+      res.status(400).send(resp.errors);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+}
+
+
+export async function addBlogLike(req: Request, res: Response) {
+  try {
+    await client.update({
+      index: 'blog',
+      id: req.params.blogId,
+      body: {
+        script: {
+          source: `${
+            req.params.operation === "add"
+              ? "ctx._source.likes++"
+              : "ctx._source.likes--"
+          }`,
+        },
+      },
+    });
+    const variables = {
+      userId: req["payload"].userId,
+      id: req.params.blogId,
+      type: "blog",
+      operation: req.params.operation,
+    };
+
+    const query = `mutation AddLike($userId: String!, $id: String!, $type: String!, $operation: String!) {
+          addLike(userId: $userId, id: $id, type: $type, operation: $operation)
+        }`;
+    const resp = await pingGraphql(query, variables);
+    if (!resp.errors) {
+      res.json(resp);
     } else {
       res.status(400).send(resp.errors);
     }
@@ -132,6 +188,7 @@ export async function getBlogs(req: Request, res: Response) {
                 title
                 description
                 img
+                imgText
                 size
                 likes
                 comments{
@@ -175,6 +232,7 @@ export async function getBlog(req: Request, res: Response) {
             description
             body
             img
+            imgText
             size
             likes
             comments{

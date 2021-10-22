@@ -36,16 +36,30 @@ export async function addContent(req: Request, res: Response) {
       enneagramType: req.params.type,
       text: fields.text,
       img: fields.img,
+      imgText: fields.imgText,
     };
 
-    const query = `mutation CreateContent($id: String, $userId: String!, $enneagramType: String!, $text: String, $img: String) {
-        createContent(id: $id, userId: $userId, enneagramType: $enneagramType, text: $text, img: $img) {
+    const query = `mutation CreateContent($id: String, 
+        $userId: String!,
+        $enneagramType: String!,
+        $text: String,
+        $img: String,
+        imgText: String,
+        ) {
+        createContent(id: $id, 
+          imgText: $imgText, 
+          userId: $userId, 
+          enneagramType: $enneagramType, 
+          text: $text, 
+          img: $img,
+          imgText: $imgText) {
             id
             author {
               id
             }
             text
             img
+            imgText
             likes
             dateCreated
             comments{
@@ -99,6 +113,7 @@ export async function getContent(req: Request, res: Response) {
             }
             text
             img
+            imgText
             likes
             dateCreated
             comments {

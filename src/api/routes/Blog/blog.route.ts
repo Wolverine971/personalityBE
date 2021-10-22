@@ -8,6 +8,11 @@ const router: Router = Router();
 router.post("/create", isAuth, blogController.createBlog);
 router.post("/update/:id", isAuth, blogController.updateBlog);
 router.delete("/delete/:id", isAuth, blogController.deleteBlog);
+router.get(
+    "/like/:blogId/:operation/:enneaType",
+    isAuth,
+    blogController.addBlogLike
+  );
 
 router.get("/get/:lastDate?", blogController.getBlogs);
 router.get("/getOne/:title", blogController.getBlog);
