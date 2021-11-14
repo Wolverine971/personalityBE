@@ -44,10 +44,10 @@ export async function addContent(req: Request, res: Response) {
         $enneagramType: String!,
         $text: String,
         $img: String,
-        imgText: String,
+        $imgText: String,
         ) {
         createContent(id: $id, 
-          imgText: $imgText, 
+          imgText: $imgText,
           userId: $userId, 
           enneagramType: $enneagramType, 
           text: $text, 
@@ -155,7 +155,7 @@ export async function loadMore(req: Request, res: Response) {
   try {
     const variables = {
       lastDate: req.params.lastDate ? req.params.lastDate : "",
-      parentId: req.params.parentId ? req.params.parentId : "",
+      parentId: req.params.parentId ? req.params.parentId : ""
     };
 
     const query = `query GetMoreComments($parentId: String!, $lastDate: String!) {

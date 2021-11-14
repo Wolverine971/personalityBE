@@ -36,12 +36,12 @@ export async function getAll(req: Request, res: Response) {
 export async function getPaginatedUsers(req: Request, res: Response) {
   try {
     const variables = {
-      cursorId: req.params.cursorId,
+      lastDate: req.params.lastDate,
       id: req["payload"].userId
     };
 
-    const query = `query Users($cursorId: String, $id: String!) {
-      users(cursorId: $cursorId, id: $id){
+    const query = `query Users($lastDate: String, $id: String!) {
+      users(lastDate: $lastDate, id: $id){
         users{
           id
           firstName

@@ -1,9 +1,9 @@
+// import CONFIG from "./config/config";
 // import socket from "socket.io";
 
 import * as aws from "aws-sdk";
 
 import app from "./App";
-import CONFIG from "./config/config";
 
 // import "../config/db";
 

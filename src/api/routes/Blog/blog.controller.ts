@@ -31,7 +31,7 @@ export async function createBlog(req: Request, res: Response) {
       authorId: req["payload"].userId,
       size: parseInt(fields.size, 10),
       img: fields.img,
-      imgText: fields.imgText
+      imgText: fields.imgText,
     };
 
     const query = `mutation CreateBlog($id: String!, 
@@ -110,11 +110,10 @@ export async function updateBlog(req: Request, res: Response) {
   }
 }
 
-
 export async function addBlogLike(req: Request, res: Response) {
   try {
     await client.update({
-      index: 'blog',
+      index: "blog",
       id: req.params.blogId,
       body: {
         script: {

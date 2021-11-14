@@ -4,7 +4,7 @@ import * as controller from "./auth.controller";
 
 const router: Router = Router();
 router.get("/getAll", controller.isAuth, controller.getAll);
-router.get("/all/:cursorId?", controller.isAuth, controller.getPaginatedUsers);
+router.get("/all/:lastDate?", controller.isAuth, controller.getPaginatedUsers);
 
 router.get("/getUserById", controller.isAuth, controller.getUserById);
 router.post("/addOne", controller.isAuth, controller.addOne);
