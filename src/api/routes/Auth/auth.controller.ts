@@ -7,7 +7,7 @@ import { client } from "../../elasticsearch";
 import { verify } from "jsonwebtoken";
 import { createAccessToken, createRefreshToken } from "../../../config/auth";
 import { pingGraphql } from "../../../helpers/pingGraphql";
-import { confirmation, forgotPass } from "./email";
+import { confirmation, forgotPass } from "./emailTemplates";
 const fetch = require("node-fetch");
 const saltRounds = 10;
 import { notificationsSetup } from "../Notifications/notifications";

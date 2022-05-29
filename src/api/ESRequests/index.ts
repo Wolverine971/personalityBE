@@ -8,6 +8,7 @@ export const mustContain = (index: string, text: string) => {
             must: {
               query_string: {
                 query: text,
+                fuzziness: 'AUTO'
               },
             },
           },
@@ -32,6 +33,7 @@ export const typeaheadQuery = (index: string, text: string) => {
           question: text,
         },
       },
+      fuzziness: 'AUTO'
     },
   };
 };
