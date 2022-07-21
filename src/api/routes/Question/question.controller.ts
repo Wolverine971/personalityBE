@@ -4,6 +4,8 @@ import { redis } from "../../..";
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { client } from "../../elasticsearch";
 import { typeaheadQuery } from "../../ESRequests";
+import { v4 as uuidv4 } from "uuid";
+import { s3 } from "../../..";
 
 // tslint:disable: no-string-literal
 export async function getTypeAhead(req: Request, res: Response) {
@@ -26,9 +28,9 @@ export async function addQuestion(req: Request, res: Response) {
       index: "question",
       type: "_doc",
       body: {
-        question: req.params.question,
+        question: req.body.question,
         authorId: req["payload"].userId,
-        authorType: req.params.type,
+        authorType: req.body.type,
         comments: 0,
         likes: 0,
         subscriptions: 0,
@@ -37,17 +39,41 @@ export async function addQuestion(req: Request, res: Response) {
       },
     })
     .then(async (resp) => {
+      const Key = uuidv4();
+      try {
+        let buf = Buffer.from(
+          req.body.img.replace(/^data:image\/\w+;base64,/, ""),
+          "base64"
+        );
+        let data = {
+          Bucket: process.env.S3_BUCKET as string,
+          Key,
+          Body: buf,
+          ContentEncoding: "base64",
+          ContentType: "image/jpeg",
+          ACL: "public-read",
+        };
+        await s3.putObject(data).promise();
+        
+      } catch (error) {
+        console.log(error);
+      }
+
       const variables = {
         id: resp._id,
-        question: req.params.question,
+        question: req.body.question,
+        context: req.body.context,
+        img: Key,
         authorId: req["payload"].userId,
       };
 
-      const query = `mutation CreateQuestion($id: String!, $question: String!, $authorId: String!) {
-        createQuestion(id: $id, question: $question, authorId: $authorId) {
+      const query = `mutation CreateQuestion($id: String!, $question: String!, $authorId: String!, $context: String, $img: String ) {
+        createQuestion(id: $id, question: $question, authorId: $authorId, context: $context, img: $img) {
           id
           question
           likes
+          context
+          img
           subscribers
           commenterIds
           dateCreated
@@ -91,6 +117,8 @@ export async function getQuestions(req: Request, res: Response) {
           id
           question
           likes
+          context
+          img
           subscribers
           commenterIds
           dateCreated
@@ -170,6 +198,8 @@ export async function getQuestion(req: Request, res: Response) {
           id
           question
           likes
+          context
+          img
           subscribers
           commenterIds
           dateCreated
@@ -231,6 +261,8 @@ export async function getJustQuestion(req: Request, res: Response) {
             count
           }
           likes
+          context
+          img
           subscribers
           commenterIds
           dateCreated
@@ -293,7 +325,7 @@ export async function getComments(req: Request, res: Response) {
       enneagramTypes: req.body.enneagramTypes,
       dateRange: req.body.dateRange,
       sortBy: req.body.sortBy,
-      skip: req.body.skip
+      skip: req.body.skip,
     };
     const query = `query GetSortedComments($questionId: String, $enneagramTypes: [String], $dateRange: String, $sortBy: String, $skip: Int) {
         getSortedComments(questionId: $questionId, enneagramTypes: $enneagramTypes, dateRange: $dateRange, sortBy: $sortBy, skip: $skip) {

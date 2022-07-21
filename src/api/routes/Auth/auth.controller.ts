@@ -8,7 +8,6 @@ import { verify } from "jsonwebtoken";
 import { createAccessToken, createRefreshToken } from "../../../config/auth";
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { confirmation, forgotPass } from "./emailTemplates";
-const fetch = require("node-fetch");
 const saltRounds = 10;
 import { notificationsSetup } from "../Notifications/notifications";
 export async function getAll(req: Request, res: Response) {
@@ -37,7 +36,7 @@ export async function getPaginatedUsers(req: Request, res: Response) {
   try {
     const variables = {
       lastDate: req.params.lastDate,
-      id: req["payload"].userId
+      id: req["payload"].userId,
     };
 
     const query = `query Users($lastDate: String, $id: String!) {
@@ -69,7 +68,7 @@ export async function getPaginatedUsers(req: Request, res: Response) {
 }
 
 export async function getUserById(req: Request, res: Response) {
-  console.log('getuserbyid')
+  console.log("getuserbyid");
   const variables = {
     id: req["payload"].userId,
   };
@@ -358,9 +357,8 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
 };
 
 export const doRefreshToken = async (req: Request, res: Response, next) => {
-  console.log('doRefreshToken')
+  console.log("doRefreshToken");
   const token = req.params.token;
-  console.log(token)
   if (!token) {
     return res.send({ ok: false, accessToken: "" });
   }
@@ -390,7 +388,6 @@ export const doRefreshToken = async (req: Request, res: Response, next) => {
     const resp = await pingGraphql(query, variables);
     if (!resp.errors) {
       user = resp.data.getUserById;
-      console.log(user)
     } else {
       return res.status(400).send(resp.errors);
     }
@@ -467,7 +464,7 @@ export const enter = async (req: Request, res: Response) => {
 };
 
 export const reset = async (req: Request, res: Response) => {
-  console.log('reset')
+  console.log("reset");
   try {
     const variables = {
       resetPasswordToken: req.params.token,
@@ -605,67 +602,49 @@ const sendConfirmation = async (confirmationToken, email, res) => {
   }
 };
 
-const getToken = async () => {
-  try {
-    console.log("getting transport");
-    const { google } = require("googleapis");
-    const OAuth2 = google.auth.OAuth2;
 
-    const myOAuth2Client = new OAuth2(
-      process.env.GMAIL_CLIENT_ID,
-      process.env.GMAIL_SECRET,
-      process.env.ORIGIN
-    );
+const makeBody = (to_emails, from_email, subject, message) => {
+  const str = [
+    'Content-Type: text/html; charset="UTF-8"\n',
+    "MIME-Version: 1.0\n",
+    "Content-Transfer-Encoding: 7bit\n",
+    `to: ${to_emails.join(",")}\n`,
+    `from: ${from_email}\n`,
+    `subject: ${subject}\n\n`,
+    message,
+  ].join("");
 
-    myOAuth2Client.setCredentials({
-      refresh_token: process.env.GMAIL_REFRESH,
-    });
-
-    const myAccessToken = await myOAuth2Client.getAccessToken();
-    if (myAccessToken && myAccessToken.token) {
-      return myAccessToken.token;
-    } else {
-      return false;
-    }
-  } catch (error) {
-    return error;
-  }
+  return Buffer.from(str)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
 };
+
 
 const sendEmail = async (to: string, subject: string, body: string) => {
   try {
-    const accessToken = await getToken();
-    if (accessToken) {
-      const encodedMail = Buffer.from(
-        'Content-Type: text/html; charset="UTF-8"\n' +
-          "MIME-Version: 1.0\n" +
-          "Content-Transfer-Encoding: 7bit\n" +
-          `to: ${to}\n` +
-          "from: usersup@gmail.com\n" +
-          `subject: ${subject}\n\n` +
-          body
-      )
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_");
-      const resp = await fetch(
-        "https://www.googleapis.com/gmail/v1/users/me/messages/send",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            raw: encodedMail,
-          }),
-        }
-      );
-      return await resp.json();
-    } else {
-      return false;
-    }
+    const { google } = require("googleapis");
+    const authClient = new google.auth.JWT(
+      'id-takes-gmail-service-account@smart-mark-302504.iam.gserviceaccount.com', 
+      null,
+      process.env.private_key,
+      ['https://www.googleapis.com/auth/gmail.send'],
+      'usersup@9takes.com'
+  );
+    const gmail = google.gmail({
+      auth: authClient,
+      version: "v1",
+    }); 
+
+    return await gmail.users.messages.send({
+      requestBody: {
+        raw: makeBody([to], "usersup@9takes.com", subject, body),
+      },
+      userId: "me",
+    });
+  
   } catch (error) {
-    return error;
+    console.log(error);
+    return false;
   }
 };

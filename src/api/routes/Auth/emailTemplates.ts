@@ -78,7 +78,7 @@ export const forgotPass = (link) => {
             outline: none;
           }
           .fun-color {
-            background: linear-gradient(to right, pink, #8fceee);
+            background: linear-gradient(to right, #F72585, #191970);
           }
 
           </style>
@@ -106,7 +106,7 @@ export const forgotPass = (link) => {
                 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
                   <tr>
                     <div class="fun-color">
-                        <h1 style="color: #8fceee; display: flex;
+                        <h1 style="color: #191970; display: flex;
                         padding-left: 30px;">9takes</h1>
                     </div>
                   </tr>
@@ -272,7 +272,7 @@ export const confirmation = (link) => {
           outline: none;
         }
         .fun-color {
-          background: linear-gradient(to right, pink, #8fceee);
+          background: linear-gradient(to right, #F72585, #191970);
         }
 
         </style>
@@ -300,7 +300,7 @@ export const confirmation = (link) => {
               <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px;">
                 <tr>
                   <div class="fun-color">
-                      <h1 style="color: #8fceee; display: flex;
+                      <h1 style="color: #191970; display: flex;
                       padding-left: 30px;">9takes</h1>
                   </div>
                 </tr>
