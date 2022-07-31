@@ -13,7 +13,7 @@ router.get(
   questionsController.getQuestions
 );
 router.post("/update/:questionId", isAuth, questionsController.updateQuestion)
-router.get("/:question", questionsController.getQuestion);
+router.get("/:url", questionsController.getQuestion);
 router.get("/single/:question", questionsController.getJustQuestion);
 router.get(
   "/like/:questionId/:operation",
@@ -28,6 +28,9 @@ router.get(
 router.post("/sort/:questionId?", isAuth, questionsController.getComments);
 
 router.put("/notifications", isAuth, questionsController.clearNotifications);
+
+router.post("/getUrl", isAuth, questionsController.getUrl);
+router.post("/reIndex", questionsController.reIndex);
 
 
 export default router;

@@ -6,12 +6,13 @@ import { client } from "../../elasticsearch";
 import { typeaheadQuery } from "../../ESRequests";
 import { v4 as uuidv4 } from "uuid";
 import { s3 } from "../../..";
+const { removeStopwords } = require("stopword");
 
 // tslint:disable: no-string-literal
 export async function getTypeAhead(req: Request, res: Response) {
   const question = req.params.question;
   return client
-    .search(typeaheadQuery("question", question))
+    .search(typeaheadQuery("question", "question", question, 10))
     .then((resp) => {
       res.json(resp.hits.hits);
     })
@@ -31,6 +32,7 @@ export async function addQuestion(req: Request, res: Response) {
         question: req.body.question,
         authorId: req["payload"].userId,
         authorType: req.body.type,
+        url: req.body.url,
         comments: 0,
         likes: 0,
         subscriptions: 0,
@@ -54,7 +56,6 @@ export async function addQuestion(req: Request, res: Response) {
           ACL: "public-read",
         };
         await s3.putObject(data).promise();
-        
       } catch (error) {
         console.log(error);
       }
@@ -65,15 +66,17 @@ export async function addQuestion(req: Request, res: Response) {
         context: req.body.context,
         img: Key,
         authorId: req["payload"].userId,
+        url: req.body.url,
       };
 
-      const query = `mutation CreateQuestion($id: String!, $question: String!, $authorId: String!, $context: String, $img: String ) {
-        createQuestion(id: $id, question: $question, authorId: $authorId, context: $context, img: $img) {
+      const query = `mutation CreateQuestion($id: String!, $question: String!, $authorId: String!, $context: String, $img: String, $url: String ) {
+        createQuestion(id: $id, question: $question, authorId: $authorId, context: $context, img: $img, url: $url) {
           id
           question
           likes
           context
           img
+          url
           subscribers
           commenterIds
           dateCreated
@@ -119,6 +122,7 @@ export async function getQuestions(req: Request, res: Response) {
           likes
           context
           img
+          url
           subscribers
           commenterIds
           dateCreated
@@ -190,16 +194,17 @@ export async function addQuestionLike(req: Request, res: Response) {
 export async function getQuestion(req: Request, res: Response) {
   try {
     const variables = {
-      questionId: req.params.question,
+      questionUrl: req.params.url,
     };
 
-    const query = `query GetQuestion($questionId: String!) {
-        getQuestion(questionId: $questionId) {
+    const query = `query GetQuestion($questionUrl: String!) {
+        getQuestion(questionUrl: $questionUrl) {
           id
           question
           likes
           context
           img
+          url
           subscribers
           commenterIds
           dateCreated
@@ -244,11 +249,11 @@ export async function getQuestion(req: Request, res: Response) {
 export async function getJustQuestion(req: Request, res: Response) {
   try {
     const variables = {
-      questionId: req.params.question,
+      questionUrl: req.params.question,
     };
 
-    const query = `query GetQuestion($questionId: String!) {
-        getQuestion(questionId: $questionId) {
+    const query = `query GetQuestion($questionUrl: String!) {
+        getQuestion(questionUrl: $questionUrl) {
           author{
             id
           }
@@ -263,6 +268,7 @@ export async function getJustQuestion(req: Request, res: Response) {
           likes
           context
           img
+          url
           subscribers
           commenterIds
           dateCreated
@@ -390,10 +396,11 @@ export async function updateQuestion(req: Request, res: Response) {
     const variables = {
       questionId: req.params.questionId,
       question: req.body.question,
+      url: getUrlString(req.body.question),
     };
 
-    const query = `mutation UpdateQuestion($questionId: String!, $question: String) {
-      updateQuestion(questionId: $questionId, question: $question)
+    const query = `mutation UpdateQuestion($questionId: String!, $question: String, $url: String) {
+      updateQuestion(questionId: $questionId, question: $question, url: $url)
       }`;
 
     const resp = await pingGraphql(query, variables);
@@ -407,6 +414,104 @@ export async function updateQuestion(req: Request, res: Response) {
     res.status(400).send(error.message);
   }
 }
+
+export const getUrl = async (req: Request, res: Response) => {
+  try {
+    const question = req.body.question;
+    const tempUrl = getUrlString(question);
+    const response = await client.search(
+      typeaheadQuery("question", "url", tempUrl, 200)
+    );
+
+    if (response.hits.hits.length) {
+      res.json({ url: `${tempUrl}-${response.hits.hits.length}` });
+    } else {
+      res.json({ url: tempUrl });
+    }
+    return;
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+};
+
+export const reIndex = async (req: Request, res: Response) => {
+  try {
+    if (process.env.reindex) {
+      console.log("reindexing");
+      const resp = await client.search({
+        index: "question",
+        size: 200,
+      });
+      const questions = resp.hits.hits.map((q) => {
+        return {
+          id: q._id,
+          ...q._source,
+        };
+      });
+      let dpromises = [];
+      questions.forEach((q) => {
+        dpromises.push(
+          client.delete({
+            id: q.id,
+            index: "question",
+            type: "_doc",
+          })
+        );
+      });
+
+      await Promise.all(dpromises);
+      const cpromises = [];
+      const newCreations = [];
+      questions.forEach((q) => {
+        const url = getUrlString(q.question);
+
+        const body = {
+          index: "question",
+          type: "_doc",
+          id: q.id,
+          body: {
+            context: "",
+            url,
+            question: q.question,
+            authorId: q.authorId,
+            authorType: q.authorType,
+            comments: q.comments,
+            likes: q.likes,
+            subscriptions: q.subscriptions,
+            createdDate: q.createdDate,
+            updatedDate: q.updatedDate,
+          },
+        };
+        cpromises.push(client.index(body));
+        newCreations.push(client.index(body));
+      });
+
+      await Promise.all(cpromises);
+      res.json({ questions, dpromises, cpromises, newCreations });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+};
+
+const getUrlString = (text) => {
+  let url = "";
+  const leftOver = removeStopwords(text.split(" "));
+  if (leftOver && leftOver.length <= 3) {
+    const lastWord = leftOver[leftOver.length - 1];
+    const index = text.indexOf(lastWord);
+    url = text
+      .substring(0, index + lastWord.length)
+      .split(" ")
+      .join("-")
+      .toLowerCase();
+  } else {
+    url = leftOver.join("-").toLowerCase();
+  }
+  return url;
+};
 
 // export async function update(req: Request, res: Response) {
 //   console.log("update questions");

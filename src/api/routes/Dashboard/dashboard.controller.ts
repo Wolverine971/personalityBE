@@ -72,8 +72,18 @@ export async function getDashboard(req: Request, res: Response) {
     if (!gqlResp.errors) {
       res.json({
         subscriptions: gqlResp.data.getDashboard,
-        newQuestions,
-        askedQuestions,
+        newQuestions: newQuestions.hits.hits.map(nq=>{
+          return {
+            id: nq._id,
+            ...nq._source
+          }
+        }),
+        askedQuestions: askedQuestions.hits.hits.map(nq=>{
+          return {
+            id: nq._id,
+            ...nq._source
+          }
+        }),
       });
     } else {
       res.status(400).send(gqlResp.errors);

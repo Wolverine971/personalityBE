@@ -8,7 +8,7 @@ export const mustContain = (index: string, text: string) => {
             must: {
               query_string: {
                 query: text,
-                fuzziness: 'AUTO'
+                fuzziness: "AUTO",
               },
             },
           },
@@ -22,18 +22,36 @@ export const mustContain = (index: string, text: string) => {
   }
 };
 
+export const match = (index: string, text: string) => {
+  return {
+    index,
+    body: {
+      query: {
+        match: {
+          comment: {
+            query: text,
+            fuzziness: "AUTO",
+          },
+        },
+      },
+    },
+  };
+};
+
 // https://www.elastic.co/guide/en/elasticsearch/reference/6.8/full-text-queries.html
 
-export const typeaheadQuery = (index: string, text: string) => {
+export const typeaheadQuery = (index: string, field: string, text: string, size: number = 10) => {
   return {
     index,
     body: {
       query: {
         match_phrase_prefix: {
-          question: text,
+          [field]: {
+            query: text,
+          },
         },
       },
-      fuzziness: 'AUTO'
     },
+    size
   };
 };
