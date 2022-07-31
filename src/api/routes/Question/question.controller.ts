@@ -327,14 +327,14 @@ export async function addSubscription(req: Request, res: Response) {
 export async function getComments(req: Request, res: Response) {
   try {
     const variables = {
-      questionId: req.params.questionId ? req.params.questionId : null,
+      questionUrl: req.params.questionUrl ? req.params.questionUrl : null,
       enneagramTypes: req.body.enneagramTypes,
       dateRange: req.body.dateRange,
       sortBy: req.body.sortBy,
       skip: req.body.skip,
     };
-    const query = `query GetSortedComments($questionId: String, $enneagramTypes: [String], $dateRange: String, $sortBy: String, $skip: Int) {
-        getSortedComments(questionId: $questionId, enneagramTypes: $enneagramTypes, dateRange: $dateRange, sortBy: $sortBy, skip: $skip) {
+    const query = `query GetSortedComments($questionUrl: String, $enneagramTypes: [String], $dateRange: String, $sortBy: String, $skip: Int) {
+        getSortedComments(questionUrl: $questionUrl, enneagramTypes: $enneagramTypes, dateRange: $dateRange, sortBy: $sortBy, skip: $skip) {
           comments {
             id
             comment
