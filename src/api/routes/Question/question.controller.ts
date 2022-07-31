@@ -496,6 +496,49 @@ export const reIndex = async (req: Request, res: Response) => {
   }
 };
 
+export const updateGraphQL = async (req: Request, res: Response) => {
+  try {
+    if (process.env.reindex) {
+      console.log("updateGraphQL");
+      const resp = await client.search({
+        index: "question",
+        size: 200,
+      });
+      const questions = resp.hits.hits.map((q) => {
+        return {
+          id: q._id,
+          ...q._source,
+        };
+      });
+      let dpromises = [];
+      questions.forEach((q) => {
+
+        const variables = {
+          questionId:q.id,
+          question: q.question,
+          url: q.url,
+        };
+    
+        const query = `mutation UpdateQuestion($questionId: String!, $question: String, $url: String) {
+          updateQuestion(questionId: $questionId, question: $question, url: $url)
+          }`;
+    
+        
+        dpromises.push(
+          pingGraphql(query, variables)
+        );
+      });
+
+      await Promise.all(dpromises);
+      res.json({ questions, dpromises});
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+};
+
+
 const getUrlString = (text) => {
   let url = "";
   const leftOver = removeStopwords(text.split(" "));

@@ -31,6 +31,6 @@ router.put("/notifications", isAuth, questionsController.clearNotifications);
 
 router.post("/getUrl", isAuth, questionsController.getUrl);
 router.post("/reIndex", questionsController.reIndex);
-
-
+router.post("/updateGraphQL", questionsController.updateGraphQL);
+// updateGraphQL
 export default router;
