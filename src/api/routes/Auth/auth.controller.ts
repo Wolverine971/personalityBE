@@ -21,14 +21,14 @@ export async function getAll(req: Request, res: Response) {
         mbtiId
       }
     }`;
-    const resp = await pingGraphql(query);
+    const resp = await pingGraphql({query, req});
     if (!resp.errors) {
       res.json(resp.data.users);
     } else {
       res.status(400).send(resp.errors);
     }
-  } catch (error) {
-    res.status(400).send(error);
+  } catch (e) {
+    res.status(400).send(e);
   }
 }
 
@@ -56,14 +56,14 @@ export async function getPaginatedUsers(req: Request, res: Response) {
         count
       }
     }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.users);
     } else {
       res.status(400).send(resp.errors);
     }
-  } catch (error) {
-    res.status(400).send(error);
+  } catch (e) {
+    res.status(400).send(e);
   }
 }
 
@@ -83,7 +83,7 @@ export async function getUserById(req: Request, res: Response) {
       mbtiId
     }
   }`;
-  const resp = await pingGraphql(query, variables);
+  const resp = await pingGraphql({query, variables, req});
   if (!resp.errors) {
     res.json(resp.data.getUserById);
   } else {
@@ -104,14 +104,14 @@ export async function addOne(req: Request, res: Response) {
     const query = `mutation CreateUser($firstName: String!, $lastName: String!, $email: String!, $enneagramId: String!, $mbtiId String!) {
       createUser(firstName: $firstName, lastName: $lastName, email: $email, enneagramId: $enneagramId, mbtiId: $mbtiId)
         }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.createUser);
     } else {
       res.status(400).send(resp.errors);
     }
-  } catch (error) {
-    res.status(400).send(error);
+  } catch (e) {
+    res.status(400).send(e);
   }
 }
 
@@ -135,14 +135,14 @@ export async function updateOne(req: Request, res: Response) {
         mbtiId
       }
     }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.updateUser);
     } else {
       res.status(400).send(resp.errors);
     }
-  } catch (error) {
-    res.status(400).send(error);
+  } catch (e) {
+    res.status(400).send(e);
   }
 }
 
@@ -155,14 +155,14 @@ export async function deleteOneByEmail(req: Request, res: Response) {
     const query = `mutation DeleteUser($email: String) {
       deleteUser(email: $email)
     }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.deleteUser);
     } else {
       res.status(400).send(resp.errors);
     }
-  } catch (error) {
-    res.status(400).send(error);
+  } catch (e) {
+    res.status(400).send(e);
   }
 }
 
@@ -190,7 +190,7 @@ export async function login(req: Request, res: Response) {
       }
     }`;
     let user = null;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       if (!resp.data.getUserByEmail.confirmedUser) {
         res.status(400).send("Email not confirmed");
@@ -220,8 +220,8 @@ export async function login(req: Request, res: Response) {
     } else {
       res.status(401).send("Login Failed");
     }
-  } catch (error) {
-    res.status(400).send(error);
+  } catch (e) {
+    res.status(400).send(e);
   }
 }
 
@@ -229,8 +229,8 @@ export async function logout(req: Request, res: Response) {
   try {
     console.log("logout");
     res.status(200).send("ok");
-  } catch (error) {
-    res.status(400).send(error);
+  } catch (e) {
+    res.status(400).send(e);
   }
 }
 
@@ -247,7 +247,7 @@ export async function register(req: Request, res: Response) {
         confirmedUser
       }
     }`;
-    let resp = await pingGraphql(query, variables);
+    let resp = await pingGraphql({query, variables, req});
     if (!resp.data.getUserByEmail && !resp.errors) {
       console.log("GetUserByEmail success");
       const hash = await bcrypt.hash(password, saltRounds);
@@ -263,7 +263,7 @@ export async function register(req: Request, res: Response) {
           confirmationToken
         }
           }`;
-      resp = await pingGraphql(query, variables);
+      resp = await pingGraphql({query, variables, req});
       if (!resp.errors) {
         console.log("CreateUser success");
         const confirmationToken = resp.data.createUser.confirmationToken;
@@ -287,7 +287,7 @@ export async function register(req: Request, res: Response) {
       }
       return res.status(400).send("User already exists, try logging on");
     }
-  } catch (error) {
+  } catch (e) {
     res.status(500).send("Failed to Register User");
   }
 }
@@ -301,14 +301,14 @@ export const confirmUser = async (req: Request, res: Response, next) => {
     const query = `mutation ConfirmUser($confirmationToken: String!) {
       confirmUser(confirmationToken: $confirmationToken)
     }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors && resp.data && resp.data.confirmUser) {
       res.send("User Confirmed");
     } else {
       res.status(400).send("Failed to Confirm User");
     }
-  } catch (error) {
-    res.status(400).send(error);
+  } catch (e) {
+    res.status(400).send(e);
   }
 };
 
@@ -324,7 +324,7 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
         resetPasswordToken
       }
     }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       const resetToken = resp.data.recover.resetPasswordToken;
       if (resetToken) {
@@ -340,8 +340,8 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
           } else {
             res.status(500).send("Forgot Password Link not sent");
           }
-        } catch (error) {
-          console.log(error);
+        } catch (e) {
+          console.log(e);
           res.status(500).send("Failed to send Forgot Password Link");
         }
       } else {
@@ -350,8 +350,8 @@ export const forgotPassword = async (req: Request, res: Response, next) => {
     } else {
       res.status(404).send("Invalid Email");
     }
-  } catch (error) {
-    res.status(500).send(error);
+  } catch (e) {
+    res.status(500).send(e);
   }
   // }
 };
@@ -385,7 +385,7 @@ export const doRefreshToken = async (req: Request, res: Response, next) => {
         }
       }`;
     let user = null;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       user = resp.data.getUserById;
     } else {
@@ -421,30 +421,28 @@ export const revokeRefreshTokens = async (req: Request, res: Response) => {
     const query = `mutation RevokeRefreshTokensForUser($email: String!) {
       revokeRefreshTokensForUser(email: $email)
     }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.send(resp.data.revokeRefreshTokensForUser);
     } else {
       res.status(400).send(resp.errors);
     }
-  } catch (error) {
-    res.status(403).send(error);
+  } catch (e) {
+    res.status(403).send(e);
   }
 };
 
 export const isAuth = (req: Request, res: Response, next) => {
-  const authorization = req.headers.authorization;
-  if (!authorization) {
+  const authToken = req.headers.authorization;
+  if (!authToken) {
     res.sendStatus(403);
   } else {
     try {
-      // const token = authorization.split(" ")[1];
-      const token = authorization;
-      const payload = verify(token, process.env.ACCESS_TOKEN);
+      const payload = verify(authToken, process.env.ACCESS_TOKEN);
       req["payload"] = payload;
       return next();
-    } catch (error) {
-      res.status(403).send(error);
+    } catch (e) {
+      res.status(403).send(e);
     }
   }
 };
@@ -453,7 +451,7 @@ export const leave = async (req: Request, res: Response) => {
   // try {
   // console.log("leave");
   res.status(200).send("leave");
-  // } catch (error) {
+  // } catch (e) {
   //   res.status(403);
   // }
 };
@@ -475,14 +473,14 @@ export const reset = async (req: Request, res: Response) => {
         id
       }
     }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.reset);
     } else {
       res.status(400).send("Password reset token is invalid or has expired.");
     }
-  } catch (error) {
-    res.status(400).send(error);
+  } catch (e) {
+    res.status(400).send(e);
   }
 };
 
@@ -491,12 +489,19 @@ export const change = async (req: Request, res: Response) => {
   const tag = req.body.tag;
   try {
     if (type !== "user") {
-      const esResp = await client.delete({
+      const exists = await client.search({
         id: tag,
         index: type,
         type: "_doc",
       });
-      console.log(esResp);
+      if(exists){
+        await client.delete({
+          id: tag,
+          index: type,
+          type: "_doc",
+        });
+
+      }
     }
     const variables = {
       id: req["payload"].userId,
@@ -506,14 +511,14 @@ export const change = async (req: Request, res: Response) => {
     const query = `mutation Change($id: String!, $type: String!, $tag: String!) {
         change(id: $id, type: $type, tag: $tag)
       }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.change);
     } else {
       res.status(400).send(resp.errors);
     }
-  } catch (error) {
-    res.status(500).send(error);
+  } catch (e) {
+    res.status(500).send(e);
   }
 };
 
@@ -530,7 +535,7 @@ export const resetPassword = async (req: Request, res: Response) => {
         email
       }
     }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       const user = resp.data.resetPassword;
       const body = `Hi from 9takes \n 
@@ -546,8 +551,8 @@ export const resetPassword = async (req: Request, res: Response) => {
     } else {
       res.status(500).send("failure");
     }
-  } catch (error) {
-    res.status(500).send(error);
+  } catch (e) {
+    res.status(500).send(e);
   }
 };
 
@@ -560,7 +565,7 @@ export const sendAllUsers = async (req: Request, res: Response) => {
         enneagramId
       }
     }`;
-    const resp = await pingGraphql(query, null);
+    const resp = await pingGraphql({query, req});
     if (!resp.errors) {
       const users = await JSON.stringify(resp.data.users);
       const sent: any = await sendEmail(
@@ -596,8 +601,8 @@ const sendConfirmation = async (confirmationToken, email, res) => {
     } else {
       res.status(500).send("Failed to Generate Confirmation Email");
     }
-  } catch (error) {
-    console.log(error);
+  } catch (e) {
+    console.log(e);
     res.status(500).send("Failed Register");
   }
 };
@@ -643,8 +648,8 @@ const sendEmail = async (to: string, subject: string, body: string) => {
       userId: "me",
     });
   
-  } catch (error) {
-    console.log(error);
+  } catch (e) {
+    console.log(e);
     return false;
   }
 };

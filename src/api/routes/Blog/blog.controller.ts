@@ -53,7 +53,7 @@ export async function createBlog(req: Request, res: Response) {
             id
           }
         }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.createBlog);
     } else {
@@ -98,7 +98,7 @@ export async function updateBlog(req: Request, res: Response) {
               id
             }
           }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.updateBlog);
     } else {
@@ -135,7 +135,7 @@ export async function addBlogLike(req: Request, res: Response) {
     const query = `mutation AddLike($userId: String!, $id: String!, $type: String!, $operation: String!) {
           addLike(userId: $userId, id: $id, type: $type, operation: $operation)
         }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp);
     } else {
@@ -156,7 +156,7 @@ export async function deleteBlog(req: Request, res: Response) {
     const query = `mutation DeleteBlog($id: String! ) {
           deleteBlog(id: $id)
           }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.deleteBlog);
     } else {
@@ -200,7 +200,7 @@ export async function getBlogs(req: Request, res: Response) {
 
         }
             }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.getBlogs);
     } else {
@@ -244,7 +244,7 @@ export async function getBlog(req: Request, res: Response) {
             dateModified
         }
             }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.getBlog);
     } else {

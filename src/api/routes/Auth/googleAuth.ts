@@ -1,6 +1,5 @@
 const { google } = require("googleapis");
 import { sign } from "jsonwebtoken";
-const rp = require("request-promise");
 export const getClient = async () => {
   try {
     // const payload = {

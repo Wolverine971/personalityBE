@@ -6,6 +6,7 @@ import comment from "./routes/Comment/comment.route";
 import content from "./routes/Content/content.route";
 import dashboard from "./routes/Dashboard/dashboard.route";
 import question from "./routes/Question/question.route";
+import rando from "./routes/rando/rando.route"
 import relationship from "./routes/Relationship/relationship.route";
 
 const router: Router = Router();
@@ -16,6 +17,7 @@ router.use("/comment", comment);
 router.use("/content", content);
 router.use("/dashboard", dashboard);
 router.use("/relationship", relationship);
+router.use("/rando", rando);
 router.use("/blog", blog);
 
 router.get("/", (req, res) => {

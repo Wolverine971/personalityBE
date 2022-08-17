@@ -69,8 +69,10 @@ export async function addContent(req: Request, res: Response) {
                 likes
                 dateCreated
                 author {
-                  id
-                  enneagramId
+                  User{
+                    id
+                    enneagramId
+                  }
                 }
                 comments {
                   comments {
@@ -83,7 +85,7 @@ export async function addContent(req: Request, res: Response) {
             }
         }
       }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.createContent);
     } else {
@@ -123,8 +125,10 @@ export async function getContent(req: Request, res: Response) {
                 likes
                 dateCreated
                 author {
-                  id
-                  enneagramId
+                  User{
+                    id
+                    enneagramId
+                  }
                 }
                 comments {
                   comments {
@@ -139,7 +143,7 @@ export async function getContent(req: Request, res: Response) {
           count
         }
       }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.getContent);
     } else {
@@ -167,8 +171,10 @@ export async function loadMore(req: Request, res: Response) {
           dateCreated
           parentId
           author {
-            id
-            enneagramId
+            User{
+              id
+              enneagramId
+            }
           }
           comments {
             comments {
@@ -180,7 +186,7 @@ export async function loadMore(req: Request, res: Response) {
         count
       }
     }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.getMoreComments);
     } else {
@@ -308,7 +314,7 @@ export async function addContentLike(req: Request, res: Response) {
     const query = `mutation AddLike($userId: String!, $id: String!, $type: String!, $operation: String!) {
           addLike(userId: $userId, id: $id, type: $type, operation: $operation)
         }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp);
     } else {

@@ -68,7 +68,7 @@ export async function getDashboard(req: Request, res: Response) {
       userId: req["payload"].userId,
     };
 
-    const gqlResp = await pingGraphql(query, variables);
+    const gqlResp = await pingGraphql({query, variables, req});
     if (!gqlResp.errors) {
       res.json({
         subscriptions: gqlResp.data.getDashboard,
@@ -88,8 +88,8 @@ export async function getDashboard(req: Request, res: Response) {
     } else {
       res.status(400).send(gqlResp.errors);
     }
-  } catch (error) {
-    console.log(error);
-    res.status(400).send(error.message);
+  } catch (e) {
+    console.log(e);
+    res.status(400).send(e.message);
   }
 }

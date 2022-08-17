@@ -1,23 +1,46 @@
-// tslint:disable-next-line: no-var-requires
-const rp = require("request-promise");
+// import fetch from "node-fetch";
+import { Request } from "express";
+const axios = require('axios').default;
 
-export const pingGraphql = async (query: any, variables?: any) => {
+export const pingGraphql = async ({
+  query,
+  variables,
+  req,
+}: {
+  query: any;
+  variables?: any;
+  req: Request;
+}) => {
   try {
-    const options = {
-      method: "POST",
-      uri: "http://localhost:3002/graphql",
-      body: {
-        variables,
-        query,
-      },
-      json: true,
-    };
 
-    return rp(options).then((r) => {
-      return r;
+    // const body = variables && query ? JSON.stringify({
+    //   variables,
+    //   query,
+    // }) : JSON.stringify({
+    //   query,
+    // })
+    // const response = await fetch("http://localhost:3002/graphql", {
+    //   method: "post",
+    //   body,
+    //   headers: { ...req.headers },
+    // });
+    // const data = await response.body
+    // return data
+
+
+    const response = await axios({
+      method: 'post',
+      url: 'http://localhost:3002/graphql',
+      data: {
+        variables,
+      query,
+      },
+      headers: req?.headers?.authorization ? { Authorization: req?.headers?.authorization }: {},
     });
-  } catch (error) {
-    console.log(error);
-    return error;
+
+    return response.data
+  } catch (e) {
+    console.log(e);
+    return e;
   }
 };

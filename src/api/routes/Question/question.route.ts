@@ -13,7 +13,7 @@ router.get(
   questionsController.getQuestions
 );
 router.post("/update/:questionId", isAuth, questionsController.updateQuestion)
-router.get("/:url", questionsController.getQuestion);
+router.get("/one/:url", questionsController.getQuestion);
 router.get("/single/:question", questionsController.getJustQuestion);
 router.get(
   "/like/:questionId/:operation",
@@ -25,12 +25,13 @@ router.get(
   isAuth,
   questionsController.addSubscription
 );
-router.post("/sort/:questionUrl?", isAuth, questionsController.getComments);
+router.post("/sort/:questionUrl?", questionsController.getComments);
 
 router.put("/notifications", isAuth, questionsController.clearNotifications);
 
 router.post("/getUrl", isAuth, questionsController.getUrl);
 router.post("/reIndex", questionsController.reIndex);
 router.post("/updateGraphQL", questionsController.updateGraphQL);
+router.get('/all', questionsController.all)
 // updateGraphQL
 export default router;

@@ -8,6 +8,27 @@ import { v4 as uuidv4 } from "uuid";
 import { s3 } from "../../..";
 const { removeStopwords } = require("stopword");
 
+
+export const all = async (req: Request, res: Response) => {
+  try {
+    const query = `query Questions {
+      questions {
+          url
+      }
+    }`;
+    const resp = await pingGraphql({query, variables: null, req});
+    if (!resp.errors) {
+      console.log(resp.data)
+      res.json(resp.data.questions);
+    } else {
+      res.status(400).send(resp.errors);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send(error.message);
+  }
+}
+
 // tslint:disable: no-string-literal
 export async function getTypeAhead(req: Request, res: Response) {
   const question = req.params.question;
@@ -21,6 +42,8 @@ export async function getTypeAhead(req: Request, res: Response) {
       res.status(400).send(err.message);
     });
 }
+
+
 
 export async function addQuestion(req: Request, res: Response) {
   const date = new Date();
@@ -43,11 +66,11 @@ export async function addQuestion(req: Request, res: Response) {
     .then(async (resp) => {
       const Key = uuidv4();
       try {
-        let buf = Buffer.from(
+        const buf = Buffer.from(
           req.body.img.replace(/^data:image\/\w+;base64,/, ""),
           "base64"
         );
-        let data = {
+        const data = {
           Bucket: process.env.S3_BUCKET as string,
           Key,
           Body: buf,
@@ -93,7 +116,7 @@ export async function addQuestion(req: Request, res: Response) {
           }
         }
       }`;
-      const gqlResp = await pingGraphql(query, variables);
+      const gqlResp = await pingGraphql({query, variables, req});
       if (!gqlResp.errors) {
         res.json(gqlResp.data.createQuestion);
       } else {
@@ -141,7 +164,7 @@ export async function getQuestions(req: Request, res: Response) {
         count
       }
     }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.getQuestions);
     } else {
@@ -179,7 +202,7 @@ export async function addQuestionLike(req: Request, res: Response) {
     const query = `mutation AddLike($userId: String!, $id: String!, $type: String!, $operation: String!) {
         addLike(userId: $userId, id: $id, type: $type, operation: $operation)
       }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp);
     } else {
@@ -220,8 +243,15 @@ export async function getQuestion(req: Request, res: Response) {
               likes
               dateCreated
               author {
-                id
-                enneagramId
+                __typename
+    ... on User{
+                  id
+                  enneagramId
+                }
+                __typename
+    ... on Rando {
+                  id
+                }
               }
               comments {
                 comments {
@@ -234,7 +264,7 @@ export async function getQuestion(req: Request, res: Response) {
           }
         }
       }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.getQuestion);
     } else {
@@ -275,7 +305,7 @@ export async function getJustQuestion(req: Request, res: Response) {
           modified
         }
       }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.getQuestion);
     } else {
@@ -312,7 +342,7 @@ export async function addSubscription(req: Request, res: Response) {
     const query = `mutation AddSubscription($userId: String!, $questionId: String!, $operation: String!) {
         addSubscription(userId: $userId, questionId: $questionId, operation: $operation) 
       }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.addSubscription);
     } else {
@@ -341,8 +371,15 @@ export async function getComments(req: Request, res: Response) {
             likes
             dateCreated
             author {
-              id
-              enneagramId
+              __typename
+    ... on User{
+                id
+                enneagramId
+              }
+              __typename
+    ... on Rando {
+                id
+              }
             }
             comments {
               comments {
@@ -351,8 +388,15 @@ export async function getComments(req: Request, res: Response) {
                 likes
                 dateCreated
                 author {
-                  id
-                  enneagramId
+                  __typename
+    ... on User{
+                    id
+                    enneagramId
+                  }
+                  __typename
+    ... on Rando {
+                    id
+                  }
                 }
                 comments {
                   comments {
@@ -368,7 +412,7 @@ export async function getComments(req: Request, res: Response) {
         }
       }`;
 
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.getSortedComments);
     } else {
@@ -403,7 +447,7 @@ export async function updateQuestion(req: Request, res: Response) {
       updateQuestion(questionId: $questionId, question: $question, url: $url)
       }`;
 
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp.data.updateQuestion);
     } else {
@@ -449,7 +493,7 @@ export const reIndex = async (req: Request, res: Response) => {
           ...q._source,
         };
       });
-      let dpromises = [];
+      const dpromises = [];
       questions.forEach((q) => {
         dpromises.push(
           client.delete({
@@ -484,7 +528,7 @@ export const reIndex = async (req: Request, res: Response) => {
           },
         };
         cpromises.push(client.index(body));
-        newCreations.push(client.index(body));
+        newCreations.push(body);
       });
 
       await Promise.all(cpromises);
@@ -510,27 +554,23 @@ export const updateGraphQL = async (req: Request, res: Response) => {
           ...q._source,
         };
       });
-      let dpromises = [];
+      const dpromises = [];
       questions.forEach((q) => {
-
         const variables = {
-          questionId:q.id,
+          questionId: q.id,
           question: q.question,
           url: q.url,
         };
-    
+
         const query = `mutation UpdateQuestion($questionId: String!, $question: String, $url: String) {
           updateQuestion(questionId: $questionId, question: $question, url: $url)
           }`;
-    
-        
-        dpromises.push(
-          pingGraphql(query, variables)
-        );
+
+        dpromises.push(pingGraphql({query, variables, req}));
       });
 
       await Promise.all(dpromises);
-      res.json({ questions, dpromises});
+      res.json({ questions, dpromises });
     }
   } catch (error) {
     console.log(error);
@@ -538,20 +578,24 @@ export const updateGraphQL = async (req: Request, res: Response) => {
   }
 };
 
-
-const getUrlString = (text) => {
+const getUrlString = (unalteredText) => {
+  const text = unalteredText.trim()
   let url = "";
   const leftOver = removeStopwords(text.split(" "));
-  if (leftOver && leftOver.length <= 3) {
+  if (leftOver && leftOver.length && leftOver.length <= 3) {
+    // if there is less than 3 key words keep the whole string up to the last key word
     const lastWord = leftOver[leftOver.length - 1];
     const index = text.indexOf(lastWord);
-    url = text
+      url = text
       .substring(0, index + lastWord.length)
       .split(" ")
       .join("-")
       .toLowerCase();
   } else {
     url = leftOver.join("-").toLowerCase();
+  }
+  if(!url){
+    return text.split(" ").join("-")
   }
   return url;
 };
@@ -661,7 +705,7 @@ const getUrlString = (text) => {
 //   const query = `query ChangeField{
 //     changeField
 //   }`;
-//   const resp = await pingGraphql(query);
+//   const resp = await pingGraphql({query});
 //   if (!resp.errors) {
 //     res.json(resp);
 //   } else {

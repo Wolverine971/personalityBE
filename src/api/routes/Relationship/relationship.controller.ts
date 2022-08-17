@@ -45,7 +45,7 @@ export async function getRelationship(req: Request, res: Response) {
             count
         }
       }`;
-    const gqlResp = await pingGraphql(query, variables);
+    const gqlResp = await pingGraphql({query, variables, req});
     if (!gqlResp.errors) {
       res.json(gqlResp.data.getRelationshipData);
     } else {
@@ -114,7 +114,7 @@ export async function createRelationshipData(req: Request, res: Response) {
                   
               }
             }`;
-        const gqlResp = await pingGraphql(query, variables);
+        const gqlResp = await pingGraphql({query, variables, req});
         if (!gqlResp.errors) {
           res.json(gqlResp.data.createRelationshipData);
         } else {
@@ -148,15 +148,15 @@ export async function addRelationshipDataLike(req: Request, res: Response) {
     const query = `mutation AddLike($userId: String!, $id: String!, $type: String!, $operation: String!) {
         addLike(userId: $userId, id: $id, type: $type, operation: $operation)
       }`;
-    const resp = await pingGraphql(query, variables);
+    const resp = await pingGraphql({query, variables, req});
     if (!resp.errors) {
       res.json(resp);
     } else {
       res.status(400).send(resp.errors);
     }
-  } catch (error) {
-    console.log(error);
-    res.status(400).send(error.message);
+  } catch (e) {
+    console.log(e);
+    res.status(400).send(e?.message);
   }
 }
 
@@ -182,7 +182,7 @@ export async function updateRelationship(req: Request, res: Response) {
   const query = `mutation UpdateThread($threadId: String!, $text: String) {
         updateThread(threadId: $threadId, text: $text) 
       }`;
-  const gqlResp = await pingGraphql(query, variables);
+  const gqlResp = await pingGraphql({query, variables, req});
   if (!gqlResp.errors) {
     res.json(gqlResp.data.updateThread);
   } else {
