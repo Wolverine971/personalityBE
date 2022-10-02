@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { verify } from "jsonwebtoken";
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { client } from "../../elasticsearch";
+import { parseAuthToken } from "../Auth/auth.controller";
 // tslint:disable: no-string-literal
 export async function getComment(req: Request, res: Response) {
   try {
@@ -70,20 +71,16 @@ export async function addComment(req: Request, res: Response) {
     const date = new Date();
     let authorId;
     let rando = false;
-    if (req.headers.authorization && req.headers.authorization !== "null") {
-      if (req.headers.authorization.includes(process.env.RANDO_PREFIX)) {
-        authorId = req.headers.authorization;
+    const token = parseAuthToken(req.headers.authorization);
+    if (token !== "null") {
+      if (token.includes(process.env.RANDO_PREFIX)) {
+        authorId = token;
         rando = true;
       } else {
-        const payload: any = verify(
-          req.headers.authorization,
-          process.env.ACCESS_TOKEN
-        );
+        const payload: any = verify(token, process.env.ACCESS_TOKEN);
         authorId = payload.userId;
       }
-
     }
-
     if (authorId) {
       return client
         .index({
@@ -205,7 +202,7 @@ export async function addComment(req: Request, res: Response) {
           res.status(400).send(err.message);
         });
     } else {
-      res.status(400).send('no author');
+      res.status(400).send("no author");
     }
   } catch (e) {
     console.log(e);
@@ -213,17 +210,13 @@ export async function addComment(req: Request, res: Response) {
   }
 }
 export async function updateComment(req: Request, res: Response) {
-  const date = new Date();
-
   let authorId;
-  if (req.headers.authorization && req.headers.authorization !== "null") {
-    if (req.headers.authorization.includes(process.env.RANDO_PREFIX)) {
-      authorId = req.headers.authorization;
+  const token = parseAuthToken(req.headers.authorization);
+  if (token !== "null") {
+    if (token.includes(process.env.RANDO_PREFIX)) {
+      authorId = token;
     } else {
-      const payload: any = verify(
-        req.headers.authorization,
-        process.env.ACCESS_TOKEN
-      );
+      const payload: any = verify(token, process.env.ACCESS_TOKEN);
       authorId = payload.userId;
     }
   }

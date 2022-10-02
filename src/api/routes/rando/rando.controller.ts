@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import { pingGraphql } from "../../../helpers/pingGraphql";
 import { client } from "../../elasticsearch";
+import { parseAuthToken } from "../Auth/auth.controller";
 
 // tslint:disable: no-string-literal
 export const getRando = async (req: Request, res: Response) => {
@@ -18,7 +19,7 @@ export const getRando = async (req: Request, res: Response) => {
             
           }
         }`;
-    const resp = await pingGraphql({query, variables, req});
+    const resp = await pingGraphql({ query, variables, req });
     if (!resp.errors) {
       res.json(resp.data.getRando);
     } else {
@@ -33,10 +34,11 @@ export const getRando = async (req: Request, res: Response) => {
 export const getPermissions = async (req: Request, res: Response) => {
   try {
     let rando = "";
+    const token = parseAuthToken(req.headers.authorization);
 
-    if (req.headers.authorization && req.headers.authorization !== "null") {
-      if (req.headers.authorization.includes(process.env.RANDO_PREFIX)) {
-        rando = req.headers.authorization;
+    if (token !== "null") {
+      if (token.includes(process.env.RANDO_PREFIX)) {
+        rando = token;
       }
     }
     const variables = {
@@ -49,11 +51,11 @@ export const getPermissions = async (req: Request, res: Response) => {
             questions
           }
         }`;
-    const resp = await pingGraphql({query, variables, req});
-    if (!resp.errors) {
-      res.json(resp.data.getRando);
+    const gqlResp = await pingGraphql({ query, variables, req });
+    if (!gqlResp.errors) {
+      res.json(gqlResp.data.getRando);
     } else {
-      res.status(400).send(resp.errors);
+      res.status(400).send(gqlResp.errors);
     }
   } catch (error) {
     console.log(error);
@@ -126,7 +128,7 @@ export const addRando = async (req: Request, res: Response) => {
           });
         }
 
-        const variables = {
+        const cVariables = {
           id: resp._id,
           parentId: req.params.id,
           authorId: req["payload"].userId,
@@ -152,7 +154,11 @@ export const addRando = async (req: Request, res: Response) => {
           }
         }
       }`;
-        const gqlResp = await pingGraphql({query, variables, req});
+        const gqlResp = await pingGraphql({
+          query,
+          variables: cVariables,
+          req,
+        });
         if (!gqlResp.errors) {
           res.json(gqlResp.data.addComment);
         } else {
@@ -163,44 +169,6 @@ export const addRando = async (req: Request, res: Response) => {
         console.trace(err.message);
         res.status(400).send(err.message);
       });
-
-    const variables = {
-      uid: req.params.rando,
-    };
-
-    const query = `query GetQuestions($pageSize: Int, $lastDate: String!) {
-        getQuestions(pageSize: $pageSize, lastDate: $lastDate) {
-          questions {
-            id
-            question
-            likes
-            context
-            img
-            url
-            subscribers
-            commenterIds
-            dateCreated
-            comments {
-              comments {
-                id
-              }
-              count
-            }
-            author {
-              id
-              enneagramId
-            }
-            modified
-          }
-          count
-        }
-      }`;
-    const resp = await pingGraphql({query, variables, req});
-    if (!resp.errors) {
-      res.json(resp.data.getQuestions);
-    } else {
-      res.status(400).send(resp.errors);
-    }
   } catch (error) {
     console.log(error);
     res.status(400).send(error.message);
