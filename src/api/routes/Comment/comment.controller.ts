@@ -72,7 +72,7 @@ export async function addComment(req: Request, res: Response) {
     let authorId;
     let rando = false;
     const token = parseAuthToken(req.headers.authorization);
-    if (token !== "null") {
+    if (!token || token.includes(process.env.RANDO_PREFIX)) {
       if (token.includes(process.env.RANDO_PREFIX)) {
         authorId = token;
         rando = true;
@@ -80,6 +80,9 @@ export async function addComment(req: Request, res: Response) {
         const payload: any = verify(token, process.env.ACCESS_TOKEN);
         authorId = payload.userId;
       }
+    } else {
+      const payload: any = verify(token, process.env.ACCESS_TOKEN);
+      authorId = payload.userId;
     }
     if (authorId) {
       return client
