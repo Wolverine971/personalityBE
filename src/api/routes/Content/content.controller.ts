@@ -85,7 +85,7 @@ export async function addContent(req: Request, res: Response) {
             }
         }
       }`;
-    const resp = await pingGraphql({query, variables, req});
+    const resp = await pingGraphql({ query, variables, req });
     if (!resp.errors) {
       res.json(resp.data.createContent);
     } else {
@@ -143,8 +143,9 @@ export async function getContent(req: Request, res: Response) {
           count
         }
       }`;
-    const resp = await pingGraphql({query, variables, req});
+    const resp = await pingGraphql({ query, variables, req });
     if (!resp.errors) {
+      console.log(resp.data);
       res.json(resp.data.getContent);
     } else {
       res.status(400).send(resp.errors);
@@ -159,7 +160,7 @@ export async function loadMore(req: Request, res: Response) {
   try {
     const variables = {
       lastDate: req.params.lastDate ? req.params.lastDate : "",
-      parentId: req.params.parentId ? req.params.parentId : ""
+      parentId: req.params.parentId ? req.params.parentId : "",
     };
 
     const query = `query GetMoreComments($parentId: String!, $lastDate: String!) {
@@ -186,7 +187,7 @@ export async function loadMore(req: Request, res: Response) {
         count
       }
     }`;
-    const resp = await pingGraphql({query, variables, req});
+    const resp = await pingGraphql({ query, variables, req });
     if (!resp.errors) {
       res.json(resp.data.getMoreComments);
     } else {
@@ -314,7 +315,7 @@ export async function addContentLike(req: Request, res: Response) {
     const query = `mutation AddLike($userId: String!, $id: String!, $type: String!, $operation: String!) {
           addLike(userId: $userId, id: $id, type: $type, operation: $operation)
         }`;
-    const resp = await pingGraphql({query, variables, req});
+    const resp = await pingGraphql({ query, variables, req });
     if (!resp.errors) {
       res.json(resp);
     } else {
