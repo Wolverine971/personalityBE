@@ -6,4 +6,6 @@ const router: Router = Router();
 
 router.post("/add", emailController.addEmail);
 
+router.get("/:date?", emailController.getEmails);
+
 export default router;

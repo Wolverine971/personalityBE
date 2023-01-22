@@ -793,7 +793,7 @@ const makeBody = (toEmails, fromEmail, subject, message) => {
     .replace(/\//g, "_");
 };
 
-const sendEmail = async (to: string, subject: string, body: string) => {
+export const sendEmail = async (to: string, subject: string, body: string) => {
   try {
     const { google } = require("googleapis");
     const authClient = new google.auth.JWT(
